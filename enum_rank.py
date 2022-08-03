@@ -1,13 +1,12 @@
 from enum import IntEnum
 
 
-@IntEnum.unique
 class Rank(IntEnum):
     JESTER = 1
     TWO = 2
     THREE = 3
-    FOUR = 3
-    FIVE = 3
+    FOUR = 4
+    FIVE = 5
     SIX = 6
     SEVEN = 7
     EIGHT = 8

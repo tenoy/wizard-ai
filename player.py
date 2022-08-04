@@ -4,12 +4,18 @@ from enum_suit import Suit
 
 
 class Player:
-    def __init__(self, player_id):
-        self.player_id = player_id
+    def __init__(self, number, player_type):
+        self.number = number
+        # can be computer or human
+        self.player_type = player_type
         self.current_hand = []
         self.current_bid = -1
         self.current_tricks_won = 0
-        self.score = 0
+        self.current_score = 0
+
+        self.history_bids = []
+        self.history_scores = []
+
         self.played_card = None
 
     def make_bid(self, round_nr, previous_bids, players):
@@ -42,6 +48,9 @@ class Player:
         self.played_card = selected_card
         self.current_hand.remove(selected_card)
         return selected_card
+
+    def __str__(self):
+        return 'Player: ' + str(self.number) + ', Score: ' + str(self.current_score)
 
 
 

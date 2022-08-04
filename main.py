@@ -11,7 +11,9 @@ from player import Player
 def get_leading_suit(trick_cards):
     leading_suit = None
     for card in trick_cards:
-        if card.suit != Suit.JOKER:
+        # if jester is played first, then the next card will be the leading suit,
+        # except if it's also a jester
+        if card.rank != Rank.JESTER:
             leading_suit = card.suit
             return leading_suit
     return leading_suit
@@ -55,17 +57,17 @@ for i in range(1, 5, 1):
     for j in range(2, 15, 1):
         c = Card(Suit(i), Rank(j))
         deck.append(c)
-        print(c)
+        #print(c)
 
 for i in range(1, 5, 1):
     c = Card(Suit.JOKER, Rank.JESTER)
     deck.append(c)
-    print(c)
+    #print(c)
 
 for i in range(1, 5, 1):
     c = Card(Suit.JOKER, Rank.WIZARD)
     deck.append(c)
-    print(c)
+    #print(c)
 
 trick1 = [deck[52], deck[54], deck[55], deck[56]]
 #highest_card_trick1 = get_highest_card_in_trick(trick1, trump_suit=Suit.CLUBS)
@@ -77,38 +79,60 @@ trick2 = [deck[0], deck[1], deck[2], deck[55]]
 number_of_players = 3
 players = deque()
 for i in range(1, number_of_players + 1, 1):
-    p = Player(i)
+    p = Player(i, 'computer')
     players.append(p)
+players.append(Player(4, 'human'))
 
-number_of_rounds = int(60 / number_of_players)
+number_of_rounds = int(60 / len(players))
 
 for i in range(1, number_of_rounds, 1):
     # Sample cards from deck
-    sampled_cards = sample(deck, i*number_of_players)
+    sampled_cards = sample(deck, i*len(players))
     # Sample trump suit (except in last round)
     trump_suit = None
     if i < number_of_rounds:
         trump_suit = sample(deck, 1)[0].suit
     # Each player gets their share of sampled cards and bid
     bids = []
+    start_idx = 0
     for player in players:
-        for j in range(0, i, 1):
-            player.current_hand.append(sampled_cards[j])
-            sampled_cards.remove(sampled_cards[j])
-        player.current_bid = player.make_bid(i, bids, players)
+        player.current_hand = sampled_cards[start_idx:start_idx+i]
+        if player.player_type == 'computer':
+            player.current_bid = player.make_bid(i, bids, players)
+        else:
+            print('Trump suit: ' + str(trump_suit))
+            print('Current hand:')
+            print(*player.current_hand)
+            print('Previous bids:', end=' ')
+            print(*bids)
+            player.current_bid = input('Enter your bid: ')
+            # todo check input bid
         bids.append(player.current_bid)
+        start_idx = start_idx + i
 
     # Each player plays a card one after another in each trick
     for j in range(0, i, 1):
         trick = []
         leading_suit = None
         for player in players:
-            played_card = player.play(trick, leading_suit)
+            if player.player_type == 'computer':
+                played_card = player.play(trick, leading_suit)
+            else:
+                print('Trump suit: ' + str(trump_suit))
+                print('Cards in trick:', end=' ')
+                print(*trick)
+                print('Current hand:')
+                for k in range(0, len(player.current_hand)):
+                    print('(' + str(k+1) + ') ' + str(player.current_hand[k]), end=' ')
+                print('')
+                idx = input('Select card: ')
+                # todo: check selected card
+                idx = int(idx) - 1
+                player.played_card = player.current_hand[idx]
+
             trick.append(played_card)
             if leading_suit is None:
                 leading_suit = get_leading_suit(trick)
-            if trick[0].rank == Rank.WIZARD:
-                leading_suit = Suit.JOKER
         highest_card = get_highest_card_in_trick(trick, trump_suit, leading_suit)
         # evaluate trick winning player
         for player in players:
@@ -117,14 +141,16 @@ for i in range(1, number_of_rounds, 1):
     # Calc score for each player and reset player hands etc
     for player in players:
         if player.current_bid == player.current_tricks_won:
-            player.score = player.score + 20 + player.current_tricks_won * 10
+            player.current_score = player.current_score + 20 + player.current_tricks_won * 10
         else:
-            player.score = player.score - (abs(player.current_tricks_won - player.current_bid)) * 10
+            player.current_score = player.current_score - (abs(player.current_tricks_won - player.current_bid)) * 10
         player.current_tricks_won = 0
         player.current_bid = -1
         player.current_hand = []
         player.played_card = None
+        print(player)
     # next round another player starts
     players.rotate(1)
+    print(players)
     print('round done')
 print('done')

@@ -7,3 +7,6 @@ class Suit(Enum):
     SPADES = 3      #Pik
     DIAMONDS = 4    #Karo
     JOKER = 5
+
+    def __str__(self):
+        return self.name

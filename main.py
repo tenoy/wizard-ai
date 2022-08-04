@@ -16,7 +16,7 @@ def get_leading_suit(trick_cards):
     return leading_suit
 
 
-def get_highest_card_in_trick(trick_cards, trump_suit):
+def get_highest_card_in_trick(trick_cards, trump_suit, leading_suit):
     # case with wizard in trick -> first wizard wins
     for card in trick_cards:
         if card.rank == Rank.WIZARD:
@@ -34,7 +34,7 @@ def get_highest_card_in_trick(trick_cards, trump_suit):
             return max(trump_cards)
 
     # case without wizard or trump card
-    leading_suit = get_leading_suit(trick_cards)
+    # leading_suit = get_leading_suit(trick_cards)
     leading_suit_cards = []
     if leading_suit is not None:
         for card in trick_cards:
@@ -67,10 +67,10 @@ for i in range(1, 5, 1):
     print(c)
 
 trick1 = [deck[52], deck[54], deck[55], deck[56]]
-highest_card_trick1 = get_highest_card_in_trick(trick1, trump_suit=Suit.CLUBS)
+#highest_card_trick1 = get_highest_card_in_trick(trick1, trump_suit=Suit.CLUBS)
 
 trick2 = [deck[0], deck[1], deck[2], deck[55]]
-highest_card_trick2 = get_highest_card_in_trick(trick2, trump_suit=Suit.HEARTS)
+#highest_card_trick2 = get_highest_card_in_trick(trick2, trump_suit=Suit.HEARTS)
 
 # put in game class or something similar
 number_of_players = 3
@@ -89,15 +89,30 @@ for i in range(1, number_of_rounds, 1):
     if i < number_of_rounds:
         trump_suit = sample(deck, 1)[0].suit
     # Each player gets their share of sampled cards and bid
+    bids = []
     for player in players:
         for j in range(0, i, 1):
-            player.current_hand = sampled_cards[j]
+            player.current_hand.append(sampled_cards[j])
             sampled_cards.remove(sampled_cards[j])
-        player.current_bid = player.make_bid(i)
+        player.current_bid = player.make_bid(i, bids, players)
+        bids.append(player.current_bid)
+
     # Each player plays a card one after another in each trick
     for j in range(0, i, 1):
         trick = []
         for player in players:
-            player.play()
-
+            leading_suit = get_leading_suit(trick)
+            played_card = player.play(trick, leading_suit)
+            trick.append(played_card)
+        highest_card = get_highest_card_in_trick(trick, trump_suit, leading_suit)
+        # evaluate trick winning player
+        for player in players:
+            if played_card == highest_card:
+                player.current_tricks_won = player.current_tricks_won + 1
+    for player in players:
+        if player.bid == player.current_tricks_won:
+            player.score = player.score + 20 + player.current_tricks_won * 10
+        else:
+            player.score = player.score - player.current_tricks_won * 10
+    print('round done')
 print('done')

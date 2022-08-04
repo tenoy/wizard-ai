@@ -77,18 +77,27 @@ number_of_players = 3
 players = []
 for i in range(1, number_of_players + 1, 1):
     p = Player(i)
+    players.append(p)
 
 number_of_rounds = int(60 / number_of_players)
 
 for i in range(1, number_of_rounds, 1):
-    # Sample i times number of player cards
+    # Sample cards from deck
     sampled_cards = sample(deck, i*number_of_players)
-    # Sample trump suit except in last round
+    # Sample trump suit (except in last round)
     trump_suit = None
     if i < number_of_rounds:
         trump_suit = sample(deck, 1)[0].suit
+    # Each player gets their share of sampled cards and bid
     for player in players:
-        for j in range(1, i + 1, 1):
-            print('bla')
+        for j in range(0, i, 1):
+            player.current_hand = sampled_cards[j]
+            sampled_cards.remove(sampled_cards[j])
+        player.current_bid = player.make_bid(i)
+    # Each player plays a card one after another in each trick
+    for j in range(0, i, 1):
+        trick = []
+        for player in players:
+            player.play()
 
 print('done')

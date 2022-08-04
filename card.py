@@ -12,6 +12,9 @@ class Card:
     def __gt__(self, other):
         return self.rank > other.rank
 
+    def __eq__(self, other):
+        return self.rank == other.rank and self.suit == other.suit
+
     def __str__(self):
         return str(self.rank) + ' ' + str(self.suit)
 

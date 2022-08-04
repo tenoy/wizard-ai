@@ -1,3 +1,4 @@
+from collections import deque
 from random import sample
 
 from card import Card
@@ -30,7 +31,7 @@ def get_highest_card_in_trick(trick_cards, trump_suit, leading_suit):
 
         if len(trump_cards) == 1:
             return trump_cards[0]
-        else:
+        elif len(trump_cards) > 1:
             return max(trump_cards)
 
     # case without wizard or trump card
@@ -74,7 +75,7 @@ trick2 = [deck[0], deck[1], deck[2], deck[55]]
 
 # put in game class or something similar
 number_of_players = 3
-players = []
+players = deque()
 for i in range(1, number_of_players + 1, 1):
     p = Player(i)
     players.append(p)
@@ -100,19 +101,30 @@ for i in range(1, number_of_rounds, 1):
     # Each player plays a card one after another in each trick
     for j in range(0, i, 1):
         trick = []
+        leading_suit = None
         for player in players:
-            leading_suit = get_leading_suit(trick)
             played_card = player.play(trick, leading_suit)
             trick.append(played_card)
+            if leading_suit is None:
+                leading_suit = get_leading_suit(trick)
+            if trick[0].rank == Rank.WIZARD:
+                leading_suit = Suit.JOKER
         highest_card = get_highest_card_in_trick(trick, trump_suit, leading_suit)
         # evaluate trick winning player
         for player in players:
-            if played_card == highest_card:
+            if player.played_card == highest_card:
                 player.current_tricks_won = player.current_tricks_won + 1
+    # Calc score for each player and reset player hands etc
     for player in players:
-        if player.bid == player.current_tricks_won:
+        if player.current_bid == player.current_tricks_won:
             player.score = player.score + 20 + player.current_tricks_won * 10
         else:
-            player.score = player.score - player.current_tricks_won * 10
+            player.score = player.score - (abs(player.current_tricks_won - player.current_bid)) * 10
+        player.current_tricks_won = 0
+        player.current_bid = -1
+        player.current_hand = []
+        player.played_card = None
+    # next round another player starts
+    players.rotate(1)
     print('round done')
 print('done')

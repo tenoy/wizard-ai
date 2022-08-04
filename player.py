@@ -28,7 +28,7 @@ class Player:
         return False
 
     def play(self, trick, leading_suit):
-        if leading_suit is None or not self.contains_current_hand_leading_suit(leading_suit):
+        if leading_suit is None or leading_suit == Suit.JOKER or not self.contains_current_hand_leading_suit(leading_suit):
             # replace this with methods that select card given the current hand
             card_idx = random.randint(0, len(self.current_hand)-1)
         else:

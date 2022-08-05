@@ -1,6 +1,4 @@
-import random
-
-from enum_suit import Suit
+from abc import abstractmethod
 
 
 class Player:
@@ -18,14 +16,18 @@ class Player:
 
         self.played_card = None
 
-    def make_bid(self, round_nr, previous_bids, players):
-        # sum of bids is not allowed to be equal to the number of the round
-        bid = random.randint(0, round_nr)
-        if len(previous_bids) == len(players) - 1:
-            while sum(previous_bids) + bid == round_nr:
-                bid = random.randint(0, round_nr)
+    @abstractmethod
+    def make_bid(self, round_nr, previous_bids, players, trump_suit):
+        pass
 
-        return bid
+    def is_valid_bid(self, bid, round_nr, previous_bids, players):
+        if len(previous_bids) == len(players) - 1:
+            if sum(previous_bids) + bid == round_nr:
+               return False
+            else:
+                return True
+        else:
+            return True
 
     def contains_current_hand_leading_suit(self, leading_suit):
         for card in self.current_hand:
@@ -33,21 +35,9 @@ class Player:
                 return True
         return False
 
-    def play(self, trick, leading_suit):
-        if leading_suit is None or leading_suit == Suit.JOKER or not self.contains_current_hand_leading_suit(leading_suit):
-            # replace this with methods that select card given the current hand
-            card_idx = random.randint(0, len(self.current_hand)-1)
-        else:
-            leading_suit_cards = []
-            for card in self.current_hand:
-                if card.suit == leading_suit or card.suit == Suit.JOKER:
-                    leading_suit_cards.append(card)
-            card_idx = random.randint(0, len(leading_suit_cards)-1)
-
-        selected_card = self.current_hand[card_idx]
-        self.played_card = selected_card
-        self.current_hand.remove(selected_card)
-        return selected_card
+    @abstractmethod
+    def play(self, trick, leading_suit, trump_suit):
+        pass
 
     def __str__(self):
         return 'Player: ' + str(self.number) + ', Score: ' + str(self.current_score)

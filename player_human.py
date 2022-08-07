@@ -49,18 +49,21 @@ class PlayerHuman(Player):
             if self.is_input_valid(human_input):
                 int_human_input = int(human_input)
                 if 0 < int_human_input <= len(self.current_hand):
-                    idx = int_human_input
-                    is_valid_input = True
+                    idx = int_human_input - 1
+                    selected_card = self.current_hand[idx]
+                    if self.is_valid_card(selected_card, leading_suit):
+                        self.played_card = selected_card
+                        self.current_hand.remove(selected_card)
+                        is_valid_input = True
+                    else:
+                        print('Invalid Card. You have at least one card that fits the suit. You must either play a card with fitting suit or a joker.')
+                        is_valid_input = False
                 else:
                     print('Invalid input. Input must be a number between 1 and ' + str(
                         len(self.current_hand)) + '.')
                     is_valid_input = False
             else:
                 is_valid_input = False
-        idx = int(idx) - 1
-        selected_card = self.current_hand[idx]
-        self.played_card = selected_card
-        self.current_hand.remove(selected_card)
         return selected_card
 
     def select_suit(self):

@@ -32,7 +32,7 @@ class Player:
             return True
 
     def is_valid_suit(self, selected_suit):
-        if selected_suit == Suit.JOKER:
+        if selected_suit == Suit.JOKER or selected_suit is None:
             return False
         else:
             return True

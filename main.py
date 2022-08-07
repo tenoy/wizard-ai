@@ -98,12 +98,12 @@ for i in range(1, number_of_rounds, 1):
     # Each player gets their share of sampled cards
     bids = []
     start_idx = 0
-    debug_card = 55
+    # testing_card = 55
     for player in players:
-        #player.current_hand = sampled_cards[start_idx:start_idx+i]
-        player.current_hand = [deck[debug_card]]
+        player.current_hand = sampled_cards[start_idx:start_idx+i]
+        # player.current_hand = [deck[testing_card]]
         start_idx = start_idx + i
-        debug_card = debug_card + 1
+        # testing_card = testing_card + 1
 
     # Sample trump suit (except in last round)
     trump_card = None
@@ -123,7 +123,7 @@ for i in range(1, number_of_rounds, 1):
         player.current_bid = player.make_bid(i, bids, players, trump_suit)
         bids.append(player.current_bid)
 
-    # Each player plays a card one after another in each trick
+    # Each player plays a card one after another in each trick j of round i
     for j in range(0, i, 1):
         trick = []
         leading_suit = None
@@ -135,18 +135,23 @@ for i in range(1, number_of_rounds, 1):
         highest_card = get_highest_card_in_trick(trick, trump_suit, leading_suit)
         # evaluate trick winning player
         winning_player = None
-        for player in players:
+        rotate_by = -1
+        for k in range(0, len(players), 1):
+            player = players[k]
             if player.played_card == highest_card:
                 player.current_tricks_won = player.current_tricks_won + 1
                 winning_player = player
+                rotate_by = len(players) - k
+        for player in players:
             if player.player_type == 'human':
                 print('Trump suit: ' + str(trump_suit))
-                print('Trick: ', end=' ')
+                print('Cards in trick: ', end=' ')
                 print(*trick, sep=', ')
                 print('Winning card: ' + str(highest_card) + ' from Player ' + str(winning_player.number))
+        players.rotate(rotate_by)
 
     # Calc score for each player and reset player hands etc
-    for player in players:
+    for player in players_game_order:
         if player.current_bid == player.current_tricks_won:
             player.current_score = player.current_score + 20 + player.current_tricks_won * 10
         else:
@@ -158,7 +163,7 @@ for i in range(1, number_of_rounds, 1):
         print(player)
 
     # next round another player starts
-    players.rotate(1)
+    players_game_order.rotate(1)
     print(players)
     print('round done')
 print('done')

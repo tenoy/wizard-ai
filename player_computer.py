@@ -14,7 +14,7 @@ class PlayerComputer(Player):
         if self.is_valid_bid(bid, round_nr, previous_bids, players):
             return bid
         else:
-            return self.make_bid(round_nr, previous_bids, players)
+            return self.make_bid(round_nr, previous_bids, players, trump_suit)
 
     def play(self, trick, leading_suit, trump_suit):
         if leading_suit is None or leading_suit == Suit.JOKER or not self.contains_current_hand_leading_suit(leading_suit):
@@ -34,7 +34,7 @@ class PlayerComputer(Player):
 
     def select_suit(self):
         selected_suit = None
-        while not self.is_valid_suit():
+        while not self.is_valid_suit(selected_suit):
             rnd_idx = random.randint(0, len(self.current_hand) - 1)
             selected_suit = self.current_hand[rnd_idx].suit
         return selected_suit

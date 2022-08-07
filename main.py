@@ -82,29 +82,46 @@ trick2 = [deck[0], deck[1], deck[2], deck[55]]
 
 # put in game class or something similar
 number_of_players = 3
-players = deque()
+players_game_order = deque()
 for i in range(1, number_of_players + 1, 1):
     p = PlayerComputer(i, 'computer')
-    players.append(p)
-players.append(PlayerHuman(4, 'human'))
+    players_game_order.append(p)
+players_game_order.append(PlayerHuman(4, 'human'))
 
-number_of_rounds = int(60 / len(players))
+number_of_rounds = int(60 / len(players_game_order))
 
 for i in range(1, number_of_rounds, 1):
+    # create a new deque for 'in round order'
+    players = deque(players_game_order)
     # Sample cards from deck
-    sampled_cards = sample(deck, i*len(players))
-    # Sample trump suit (except in last round)
-    trump_suit = None
-    if i < number_of_rounds:
-        trump_suit = sample(deck, 1)[0].suit
-    # Each player gets their share of sampled cards and bid
+    sampled_cards = sample(deck, i*len(players)+1)
+    # Each player gets their share of sampled cards
     bids = []
     start_idx = 0
+    debug_card = 55
     for player in players:
-        player.current_hand = sampled_cards[start_idx:start_idx+i]
+        #player.current_hand = sampled_cards[start_idx:start_idx+i]
+        player.current_hand = [deck[debug_card]]
+        start_idx = start_idx + i
+        debug_card = debug_card + 1
+
+    # Sample trump suit (except in last round)
+    trump_card = None
+    trump_suit = None
+    if i < number_of_rounds:
+        trump_card = sampled_cards[len(sampled_cards)-1]
+        # trump_card = Card(Suit.JOKER, Rank.WIZARD) # for testing
+        trump_suit = trump_card.suit
+        if trump_suit == Suit.JOKER:
+            if trump_card.rank == Rank.WIZARD:
+                trump_suit = players[0].select_suit()
+            else:
+                trump_suit = None
+
+    # Place bids
+    for player in players:
         player.current_bid = player.make_bid(i, bids, players, trump_suit)
         bids.append(player.current_bid)
-        start_idx = start_idx + i
 
     # Each player plays a card one after another in each trick
     for j in range(0, i, 1):
@@ -122,6 +139,12 @@ for i in range(1, number_of_rounds, 1):
             if player.played_card == highest_card:
                 player.current_tricks_won = player.current_tricks_won + 1
                 winning_player = player
+            if player.player_type == 'human':
+                print('Trump suit: ' + str(trump_suit))
+                print('Trick: ', end=' ')
+                print(*trick, sep=', ')
+                print('Winning card: ' + str(highest_card) + ' from Player ' + str(winning_player.number))
+
     # Calc score for each player and reset player hands etc
     for player in players:
         if player.current_bid == player.current_tricks_won:
@@ -133,11 +156,6 @@ for i in range(1, number_of_rounds, 1):
         player.current_hand = []
         player.played_card = None
         print(player)
-        if player.player_type == 'human':
-            print('Trump suit: ' + str(trump_suit))
-            print('Trick: ', end=' ')
-            print(*trick, sep=', ')
-            print('Winning card: ' + str(highest_card) + ' from Player ' + str(winning_player.number))
 
     # next round another player starts
     players.rotate(1)

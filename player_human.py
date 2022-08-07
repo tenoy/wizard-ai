@@ -1,3 +1,4 @@
+from enum_suit import Suit
 from player import Player
 
 
@@ -12,33 +13,81 @@ class PlayerHuman(Player):
         return is_valid
 
     def make_bid(self, round_nr, previous_bids, players, trump_suit):
+        bid = -1
         print('Trump suit: ' + str(trump_suit))
         print('Current hand:')
         print(*self.current_hand, sep=', ')
         print('Previous bids:', end=' ')
         print(*previous_bids)
-        human_input = input('Enter your bid: ')
-        while not self.is_input_valid(human_input):
-            human_input = input('Invalid input, enter again: ')
-        int_human_input = int(human_input)
-        if not self.is_valid_bid(int_human_input, round_nr, previous_bids, players):
-            print('Invalid bid, the sum of bids is not allowed to equal the round number')
-            return self.make_bid(round_nr, previous_bids, players, trump_suit)
-        else:
-            return int_human_input
+        is_valid_input = False
+        while not is_valid_input:
+            human_input = input('Enter your bid: ')
+            if self.is_input_valid(human_input):
+                int_human_input = int(human_input)
+                if self.is_valid_bid(int_human_input, round_nr, previous_bids, players):
+                    bid = int_human_input
+                    is_valid_input = True
+                else:
+                    print('Invalid bid. The sum of bids is not allowed to equal the round number')
+                    is_valid_input = False
+            else:
+                print('Invalid input. Input must be a positive number.')
+                is_valid_input = False
+
+        return bid
 
     def play(self, trick, leading_suit, trump_suit):
+        selected_card = None
+        idx = -1
         print('Trump suit: ' + str(trump_suit))
         print('Cards in trick:', end=' ')
         print(*trick, sep=', ')
-        print('Current hand:')
-        for k in range(0, len(self.current_hand)):
-            print('(' + str(k + 1) + ') ' + str(self.current_hand[k]) + ' ', end=' ')
-        print('')
-        idx = input('Select card: ')
-        # todo: check selected card
+        self.print_current_hand()
+        is_valid_input = False
+        while not is_valid_input:
+            human_input = input('Select card: ')
+            if self.is_input_valid(human_input):
+                int_human_input = int(human_input)
+                if 0 < int_human_input <= len(self.current_hand):
+                    idx = int_human_input
+                    is_valid_input = True
+                else:
+                    print('Invalid input. Input must be a number between 1 and ' + str(
+                        len(self.current_hand)) + '.')
+                    is_valid_input = False
+            else:
+                is_valid_input = False
         idx = int(idx) - 1
         selected_card = self.current_hand[idx]
         self.played_card = selected_card
         self.current_hand.remove(selected_card)
         return selected_card
+
+    def select_suit(self):
+        selected_suit = None
+        self.print_current_hand()
+        i = 1
+        print('Suits')
+        for suit in Suit:
+            if suit != Suit.JOKER:
+                print('(' + str(i) + ') ' + str(suit) + ' ', end=' ')
+            i = i + 1
+        print('')
+        is_valid_input = False
+        while not is_valid_input:
+            human_input = input('Select suit: ')
+            if self.is_input_valid(human_input):
+                int_human_input = int(human_input)
+                if 0 < int_human_input <= len(Suit)-1:
+                    idx = int_human_input
+                    selected_suit = Suit(idx)
+                    is_valid_input = True
+                else:
+                    print('Invalid input. Input must be a number between 1 and ' + str(
+                        len(Suit)-1) + '.')
+                    is_valid_input = False
+            else:
+                print('Invalid input. Input must be a number.')
+                is_valid_input = False
+
+        return selected_suit

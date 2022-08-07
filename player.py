@@ -1,5 +1,7 @@
 from abc import abstractmethod
 
+from enum_suit import Suit
+
 
 class Player:
     def __init__(self, number, player_type):
@@ -29,14 +31,46 @@ class Player:
         else:
             return True
 
+    def is_valid_suit(self, selected_suit):
+        if selected_suit == Suit.JOKER:
+            return False
+        else:
+            return True
+
+    def print_current_hand(self):
+        print('Current hand:')
+        for k in range(0, len(self.current_hand)):
+            print('(' + str(k + 1) + ') ' + str(self.current_hand[k]) + ' ', end=' ')
+        print('')
+
     def contains_current_hand_leading_suit(self, leading_suit):
         for card in self.current_hand:
             if card.suit == leading_suit:
                 return True
         return False
 
+    def is_valid_card(self, selected_card, leading_suit):
+        if leading_suit is None:
+            return True
+        elif leading_suit == Suit.JOKER:
+            return True
+        elif selected_card.suit == Suit.JOKER:
+            return True
+        else:
+            if self.contains_current_hand_leading_suit(leading_suit):
+                if selected_card.suit == leading_suit:
+                    return True
+                else:
+                    return False
+            else:
+                return True
+
     @abstractmethod
     def play(self, trick, leading_suit, trump_suit):
+        pass
+
+    @abstractmethod
+    def select_suit(self):
         pass
 
     def __str__(self):

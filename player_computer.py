@@ -31,3 +31,10 @@ class PlayerComputer(Player):
         self.played_card = selected_card
         self.current_hand.remove(selected_card)
         return selected_card
+
+    def select_suit(self):
+        selected_suit = None
+        while not self.is_valid_suit():
+            rnd_idx = random.randint(0, len(self.current_hand) - 1)
+            selected_suit = self.current_hand[rnd_idx].suit
+        return selected_suit

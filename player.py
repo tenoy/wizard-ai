@@ -24,7 +24,7 @@ class Player:
 
     def is_valid_bid(self, bid, round_nr, previous_bids, players):
         if len(previous_bids) == len(players) - 1:
-            if sum(previous_bids) + bid == round_nr:
+            if sum(previous_bids.values()) + bid == round_nr:
                return False
             else:
                 return True
@@ -66,7 +66,7 @@ class Player:
                 return True
 
     @abstractmethod
-    def play(self, trick, leading_suit, trump_suit):
+    def play(self, trick, leading_suit, trump_suit, bids):
         pass
 
     @abstractmethod
@@ -74,7 +74,10 @@ class Player:
         pass
 
     def __str__(self):
-        return 'Player: ' + str(self.number) + ', Score: ' + str(self.current_score)
+        return 'Player_' + str(self.number)
+
+    def __repr__(self):
+        return 'Player_' + str(self.number)
 
 
 

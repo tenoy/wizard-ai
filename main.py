@@ -1,17 +1,13 @@
 from collections import deque
 from random import sample
-
 from card import Card
 from enum_rank import Rank
 from enum_suit import Suit
-from player import Player
-
-
-# Structure of game: Game -> Round -> Trick
 from player_computer import PlayerComputer
 from player_human import PlayerHuman
 
 
+# Structure of game: Game -> Round -> Trick
 def get_leading_suit(trick_cards):
     leading_suit = None
     for card in trick_cards:
@@ -74,17 +70,11 @@ for i in range(1, 5, 1):
     deck.append(c)
     #print(c)
 
-trick1 = [deck[52], deck[54], deck[55], deck[56]]
-#highest_card_trick1 = get_highest_card_in_trick(trick1, trump_suit=Suit.CLUBS)
-
-trick2 = [deck[0], deck[1], deck[2], deck[55]]
-#highest_card_trick2 = get_highest_card_in_trick(trick2, trump_suit=Suit.HEARTS)
-
 # put in game class or something similar
 number_of_players = 3
 players_game_order = deque()
 for i in range(1, number_of_players + 1, 1):
-    p = PlayerComputer(i, 'computer')
+    p = PlayerComputer(i, 'computer', 'random')
     players_game_order.append(p)
 players_game_order.append(PlayerHuman(4, 'human'))
 
@@ -96,7 +86,7 @@ for i in range(1, number_of_rounds, 1):
     # Sample cards from deck
     sampled_cards = sample(deck, i*len(players)+1)
     # Each player gets their share of sampled cards
-    bids = []
+    bids = {}
     start_idx = 0
     # testing_card = 55
     for player in players:
@@ -121,14 +111,14 @@ for i in range(1, number_of_rounds, 1):
     # Place bids
     for player in players:
         player.current_bid = player.make_bid(i, bids, players, trump_suit)
-        bids.append(player.current_bid)
+        bids[player] = player.current_bid
 
     # Each player plays a card one after another in each trick j of round i
     for j in range(0, i, 1):
         trick = []
         leading_suit = None
         for player in players:
-            played_card = player.play(trick, leading_suit, trump_suit)
+            played_card = player.play(trick, leading_suit, trump_suit, bids)
             trick.append(played_card)
             if leading_suit is None:
                 leading_suit = get_leading_suit(trick)
@@ -160,10 +150,9 @@ for i in range(1, number_of_rounds, 1):
         player.current_bid = -1
         player.current_hand = []
         player.played_card = None
-        print(player)
+        print(str(player) + ', Score: ' + str(player.current_score))
 
     # next round another player starts
     players_game_order.rotate(1)
-    print(players)
-    print('round done')
+    print('Round ' + str(i) + ' done')
 print('done')

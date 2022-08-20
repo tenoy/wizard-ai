@@ -12,6 +12,7 @@ class Player:
         self.current_bid = -1
         self.current_tricks_won = 0
         self.current_score = 0
+        self.games_won = 0
 
         self.history_bids = []
         self.history_scores = []
@@ -28,12 +29,6 @@ class Player:
                return False
             else:
                 return True
-        else:
-            return True
-
-    def is_valid_suit(self, selected_suit):
-        if selected_suit == Suit.JOKER or selected_suit is None:
-            return False
         else:
             return True
 

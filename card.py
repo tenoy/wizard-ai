@@ -15,6 +15,9 @@ class Card:
     def __str__(self):
         return str(self.rank) + ' ' + str(self.suit)
 
+    def __repr__(self):
+        return str(self.rank) + ' ' + str(self.suit)
+
 
 
 

@@ -103,6 +103,8 @@ def simulate_episode(state):
                 if leading_suit is None:
                     leading_suit = get_leading_suit(trick)
             highest_card = get_highest_card_in_trick(trick, trump_suit, leading_suit)
+            win_count_card = winning_cards.setdefault(highest_card, 0)
+            winning_cards[highest_card] = win_count_card + 1
             # evaluate trick winning player
             winning_player = None
             rotate_by = -1
@@ -174,13 +176,14 @@ for i in range(1, 5, 1):
 # put in game class or something similar
 number_of_players = 3
 players_initial_order = deque()
-for i in range(1, number_of_players + 1, 1):
+for i in range(1, number_of_players+1, 1):
     p = PlayerComputer(i, 'computer', 'random')
     players_initial_order.append(p)
+players_initial_order.append(PlayerComputer(4, 'computer', 'weighted_random'))
 # players_game_order.append(PlayerHuman(4, 'human'))
 
 s0 = State(players_initial_order, 1, [], deck, {}, None)
-
+winning_cards = {}
 for i in range(0, 1000):
     simulate_episode(s0)
 print('done')

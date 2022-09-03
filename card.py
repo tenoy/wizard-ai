@@ -7,8 +7,10 @@ class Card:
     def __init__(self, suit, rank):
         self.suit = suit
         self.rank = rank
+        self.win_prob = self.calc_win_prob('normal')
+        self.win_prob_trump = self.calc_win_prob('trump')
 
-    #used only to compare cards of same suit
+    # used only to compare cards of same suit
     def __gt__(self, other):
         return self.rank > other.rank
 
@@ -18,8 +20,30 @@ class Card:
     def __repr__(self):
         return str(self.rank) + ' ' + str(self.suit)
 
+    # Calculates a static probability for this card being the highest card drawn
+    # Used for bidding phase
+    def calc_win_prob(self, suit_type):
+        if self.rank == Rank.WIZARD:
+            return 1
+        if self.rank == Rank.JESTER:
+            return 1 - 56/59
+        # if type of suit is normal -> card is not trump, but may be leading suit
+        num_of_cards_higher = Rank.ACE - self.rank
+        if suit_type is 'normal':
+            # In 25% of the cases the card will match the leading suit
+            # Wizards, trump cards and higher leading suit cards are higher
+            leading_suit_prob = (4 + len(Rank)-2 + num_of_cards_higher) / 59
+            # In 75% of the cases the card will not match
+            # All other cards are considered higher except the own suit and jester
+            not_leading_suit_prob = (4 + (len(Rank)-2)*3 + num_of_cards_higher) / 59
+            prob = 0.25 * leading_suit_prob + 0.75 * not_leading_suit_prob
+            #num_of_cards_higher = num_of_cards_higher * (len(Suit)-2) + (len(Rank)-2) * 2 + 4
+        # if type of suit is leading, count only higher cards of this suit and trump suit
+        if suit_type is 'trump':
+            num_of_cards_higher = num_of_cards_higher + 4
+            prob = num_of_cards_higher / 59
 
-
-
+        win_prob = 1 - prob
+        return win_prob
 
 

@@ -174,13 +174,13 @@ for i in range(1, 5, 1):
     #print(c)
 
 # put in game class or something similar
-number_of_players = 3
+number_of_players = 2
 players_initial_order = deque()
 for i in range(1, number_of_players+1, 1):
     p = PlayerComputer(i, 'computer', 'random')
     players_initial_order.append(p)
 players_initial_order.append(PlayerComputer(4, 'computer', 'weighted_random'))
-# players_game_order.append(PlayerHuman(4, 'human'))
+# players_initial_order.append(PlayerHuman(5, 'human'))
 
 s0 = State(players_initial_order, 1, [], deck, {}, None)
 winning_cards = {}

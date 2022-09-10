@@ -24,9 +24,11 @@ class Player:
         pass
 
     def is_valid_bid(self, bid, round_nr, previous_bids, players):
+        if bid < 0:
+            return False
         if len(previous_bids) == len(players) - 1:
             if sum(previous_bids.values()) + bid == round_nr:
-               return False
+                return False
             else:
                 return True
         else:

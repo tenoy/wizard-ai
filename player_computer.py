@@ -21,7 +21,7 @@ class PlayerComputer(Player):
             case 'weighted_random':
                 bid = WeightedRandomPolicy.make_bid(round_nr, self.current_hand, trump_suit)
                 while not self.is_valid_bid(bid, round_nr, previous_bids, players):
-                    bid = bid - 1
+                    bid = bid + random.randint(-1, 1)
         return bid
 
     def play(self, trick, leading_suit, trump_suit, bids):

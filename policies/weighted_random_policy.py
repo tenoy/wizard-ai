@@ -1,7 +1,9 @@
 import random
 from enum_suit import Suit
 
-
+# static weighted random policy
+# bids using a-priori winning probabilities of cards in hand
+# plays cards in a similar way
 class WeightedRandomPolicy():
 
     @staticmethod
@@ -20,16 +22,8 @@ class WeightedRandomPolicy():
         return bid
 
     @staticmethod
-    def play(trick, leading_suit, trump_suit, bids, current_hand, contains_current_hand_leading_suit):
-        legal_cards = []
-        if leading_suit is None or leading_suit == Suit.JOKER or not contains_current_hand_leading_suit:
-            # card_idx = random.randint(0, len(current_hand)-1)
-            legal_cards.extend(current_hand)
-        else:
-            for card in current_hand:
-                if card.suit == leading_suit or card.suit == Suit.JOKER:
-                    legal_cards.append(card)
-            # card_idx = random.randint(0, len(leading_suit_cards)-1)
+    def play(trick, leading_suit, trump_suit, bids, legal_cards, current_hand):
+        #build 'probability intervals' whose size correspond to their probability
         interval = 0
         probs_dict = {}
         for card in legal_cards:

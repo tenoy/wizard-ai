@@ -1,4 +1,6 @@
 import random
+
+from enum_suit import Suit
 from player import Player
 from policies.random_policy import RandomPolicy
 from policies.weighted_random_policy import WeightedRandomPolicy
@@ -25,12 +27,19 @@ class PlayerComputer(Player):
         return bid
 
     def play(self, trick, leading_suit, trump_suit, bids):
-        hand_contains_leading_suit = self.contains_current_hand_leading_suit(leading_suit)
+        #prepare set of cards that are allowed to play so that the policies dont have to deal with that again and again
+        legal_cards = []
+        if leading_suit is None or leading_suit == Suit.JOKER or not self.contains_current_hand_leading_suit(leading_suit):
+            legal_cards.extend(self.current_hand)
+        else:
+            for card in self.current_hand:
+                if card.suit == leading_suit or card.suit == Suit.JOKER:
+                    legal_cards.append(card)
         match self.policy:
             case 'random':
-                selected_card = RandomPolicy.play(trick, leading_suit, trump_suit, bids, self.current_hand, hand_contains_leading_suit)
+                selected_card = RandomPolicy.play(trick, leading_suit, trump_suit, bids, legal_cards, self.current_hand)
             case 'weighted_random':
-                selected_card = WeightedRandomPolicy.play(trick, leading_suit, trump_suit, bids, self.current_hand, hand_contains_leading_suit)
+                selected_card = WeightedRandomPolicy.play(trick, leading_suit, trump_suit, bids, legal_cards, self.current_hand)
 
         self.played_card = selected_card
         self.current_hand.remove(selected_card)

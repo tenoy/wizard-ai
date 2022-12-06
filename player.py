@@ -1,6 +1,7 @@
 from abc import abstractmethod
 
 from enum_suit import Suit
+from utils import contains_current_hand_leading_suit
 
 
 class Player:
@@ -19,10 +20,6 @@ class Player:
 
         self.played_card = None
 
-    @abstractmethod
-    def make_bid(self, round_nr, previous_bids, players, trump_suit):
-        pass
-
     def is_valid_bid(self, bid, round_nr, previous_bids, players):
         if bid < 0:
             return False
@@ -40,12 +37,6 @@ class Player:
             print('(' + str(k + 1) + ') ' + str(self.current_hand[k]) + ' ', end=' ')
         print('')
 
-    def contains_current_hand_leading_suit(self, leading_suit):
-        for card in self.current_hand:
-            if card.suit == leading_suit:
-                return True
-        return False
-
     def is_valid_card(self, selected_card, leading_suit):
         if leading_suit is None:
             return True
@@ -54,13 +45,17 @@ class Player:
         elif selected_card.suit == Suit.JOKER:
             return True
         else:
-            if self.contains_current_hand_leading_suit(leading_suit):
+            if contains_current_hand_leading_suit(self.current_hand, leading_suit):
                 if selected_card.suit == leading_suit:
                     return True
                 else:
                     return False
             else:
                 return True
+
+    @abstractmethod
+    def make_bid(self, round_nr, previous_bids, players, trump_suit):
+        pass
 
     @abstractmethod
     def play(self, trick, leading_suit, trump_suit, bids):

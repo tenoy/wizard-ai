@@ -7,51 +7,9 @@ from enum_suit import Suit
 from player_computer import PlayerComputer
 from player_human import PlayerHuman
 from state import State
+from utils import get_highest_card_in_trick
 
 
-def get_leading_suit(trick_cards):
-    leading_suit = None
-    for card in trick_cards:
-        # if jester is played first, then the next card will be the leading suit,
-        # except if it's also a jester
-        if card.rank != Rank.JESTER:
-            leading_suit = card.suit
-            return leading_suit
-    return leading_suit
-
-
-def get_highest_card_in_trick(trick_cards, trump_suit, leading_suit):
-    # case with wizard in trick -> first wizard wins
-    for card in trick_cards:
-        if card.rank == Rank.WIZARD:
-            return card
-    # case with trump in trick -> the highest trump card wins
-    if trump_suit is not None:
-        trump_cards = []
-        for card in trick_cards:
-            if card.suit == trump_suit:
-                trump_cards.append(card)
-
-        if len(trump_cards) == 1:
-            return trump_cards[0]
-        elif len(trump_cards) > 1:
-            return max(trump_cards)
-
-    # case without wizard or trump card
-    # leading_suit = get_leading_suit(trick_cards)
-    leading_suit_cards = []
-    if leading_suit is not None:
-        for card in trick_cards:
-            if card.suit == leading_suit:
-                leading_suit_cards.append(card)
-
-        if len(leading_suit_cards) == 1:
-            return leading_suit_cards[0]
-        else:
-            return max(leading_suit_cards)
-    else:
-        # case with only jesters
-        return trick_cards[0]  # the first jester wins
 
 def simulate_episode(state):
     players_game_order = state.players
@@ -177,9 +135,10 @@ for i in range(1, 5, 1):
 number_of_players = 2
 players_initial_order = deque()
 for i in range(1, number_of_players+1, 1):
-    p = PlayerComputer(i, 'computer', 'random')
+    p = PlayerComputer(i, 'computer', 'dynamic_weighted_random')
     players_initial_order.append(p)
-players_initial_order.append(PlayerComputer(4, 'computer', 'weighted_random'))
+players_initial_order.append(PlayerComputer(3, 'computer', 'weighted_random'))
+players_initial_order.append(PlayerComputer(4, 'computer', 'dynamic_weighted_random'))
 # players_initial_order.append(PlayerHuman(5, 'human'))
 
 s0 = State(players_initial_order, 1, [], deck, {}, None)

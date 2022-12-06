@@ -1,5 +1,6 @@
 from enum_rank import Rank
 from enum_suit import Suit
+from utils import get_leading_suit
 
 
 class Card:
@@ -7,10 +8,10 @@ class Card:
     def __init__(self, suit, rank):
         self.suit = suit
         self.rank = rank
-        self.win_prob = self.calc_win_prob('normal')
-        self.win_prob_trump = self.calc_win_prob('trump')
+        self.win_prob = self.calc_static_win_prob('normal')
+        self.win_prob_trump = self.calc_static_win_prob('trump')
 
-    # used only to compare cards of same suit
+    # use only to compare cards of same suit!
     def __gt__(self, other):
         return self.rank > other.rank
 
@@ -20,11 +21,11 @@ class Card:
     def __repr__(self):
         return str(self.rank) + ' ' + str(self.suit)
 
-    # Calculates a static probability for this card being the highest card drawn
+    # Calculates static a-priori probability for this card being the highest card drawn
     # Used for bidding phase
-    def calc_win_prob(self, suit_type):
+    def calc_static_win_prob(self, suit_type):
         if self.rank == Rank.WIZARD:
-            return 1
+            return 1 - 3/59
         if self.rank == Rank.JESTER:
             return 1 - 56/59
         # if type of suit is normal -> card is not trump, but may be leading suit
@@ -38,12 +39,20 @@ class Card:
             not_leading_suit_prob = (4 + (len(Rank)-2)*3 + num_of_cards_higher) / 59
             prob = 0.25 * leading_suit_prob + 0.75 * not_leading_suit_prob
             #num_of_cards_higher = num_of_cards_higher * (len(Suit)-2) + (len(Rank)-2) * 2 + 4
-        # if type of suit is leading, count only higher cards of this suit and trump suit
+        # if type of suit is trump, then count only higher trump cards and wizards
         if suit_type is 'trump':
             num_of_cards_higher = num_of_cards_higher + 4
             prob = num_of_cards_higher / 59
 
         win_prob = 1 - prob
         return win_prob
+
+    def calc_dynamic_win_prob(self, suit_type, trick_cards, trump_suit):
+        leading_suit = get_leading_suit(trick_cards)
+        # card will be leading suit (if not jester)
+        if leading_suit is None:
+            # todo: calc prob of winning with leading suit
+            print('diesdas')
+
 
 

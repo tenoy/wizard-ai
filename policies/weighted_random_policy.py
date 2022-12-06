@@ -1,6 +1,7 @@
 import random
 from enum_suit import Suit
 
+
 # static weighted random policy
 # bids using a-priori winning probabilities of cards in hand
 # plays cards in a similar way

@@ -6,6 +6,7 @@ from enum_rank import Rank
 from enum_suit import Suit
 from player_computer import PlayerComputer
 from player_human import PlayerHuman
+from policies.player_computer_random import PlayerComputerRandom
 from state import State
 from trick import Trick
 
@@ -41,7 +42,7 @@ def simulate_episode(state):
             trump_suit = trump_card.suit
             if trump_suit == Suit.JOKER:
                 if trump_card.rank == Rank.WIZARD:
-                    trump_suit = players[0].select_suit()
+                    trump_suit = players[0].pick_suit()
                 else:
                     trump_suit = None
 
@@ -137,6 +138,7 @@ number_of_players = 2
 players_initial_order = deque()
 players_initial_order.append(PlayerComputer(1, 'computer', 'dynamic_weighted_random'))
 players_initial_order.append(PlayerComputer(2, 'computer', 'weighted_random'))
+players_initial_order.append(PlayerComputerRandom(8, 'computer', "randomChild"))
 #players_initial_order.append(PlayerComputer(3, 'computer', 'dynamic_weighted_random'))
 #players_initial_order.append(PlayerComputer(4, 'computer', 'dynamic_weighted_random'))
 #players_initial_order.append(PlayerComputer(5, 'computer', 'dynamic_weighted_random'))

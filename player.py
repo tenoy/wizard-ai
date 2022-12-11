@@ -2,7 +2,7 @@ from abc import abstractmethod
 from collections import deque
 
 from enum_suit import Suit
-from utils import contains_current_hand_leading_suit
+from utils import has_leading_suit_in_hand
 
 
 class Player:
@@ -46,7 +46,7 @@ class Player:
         elif selected_card.suit == Suit.JOKER:
             return True
         else:
-            if contains_current_hand_leading_suit(self.current_hand, leading_suit):
+            if has_leading_suit_in_hand(self.current_hand, leading_suit):
                 if selected_card.suit == leading_suit:
                     return True
                 else:
@@ -63,7 +63,7 @@ class Player:
         pass
 
     @abstractmethod
-    def select_suit(self):
+    def pick_suit(self):
         pass
 
     def __str__(self):

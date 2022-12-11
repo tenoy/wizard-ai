@@ -59,10 +59,11 @@ class Card:
         return win_prob
 
     # Calculates the dynamic / state dependent winning probability of a card
-    def calc_dynamic_win_prob(self, trick, cards_played, n_of_players):
+    def calc_dynamic_win_prob(self, trick, cards_played, cards_legal, cards_hand, n_players):
         # calc how many turns are made after playing this card
-        n_turns_left_in_trick = n_of_players - len(trick.cards) - 1
+        n_turns_left_in_trick = n_players - len(trick.cards) - 1
         n_cards_played = len(cards_played)
+        n_cards_hand = len(cards_hand)
 
         # case if this card is a wizard
         if self.rank == Rank.WIZARD:
@@ -75,7 +76,7 @@ class Card:
         # case if this card is a jester
         if self.rank == Rank.JESTER:
             # a jester can only win a trick if all following cards are also jesters (which is only possible up to 4 players)
-            if len(trick.cards) == 0 and n_of_players <= 4:
+            if len(trick.cards) == 0 and n_players <= 4:
                 n_jesters_played = len([card for card in cards_played if card.rank == Rank.JESTER])
                 prob = self.calc_hypergeometric_prob(M=(3 - n_jesters_played), k=n_turns_left_in_trick, N=(59 - n_cards_played), n=n_turns_left_in_trick)
                 return prob
@@ -88,14 +89,15 @@ class Card:
             if len([card for card in trick.cards if card.suit == trick.trump_suit and card.rank > self.rank]) > 0:
                 return 0
             else:
-                # get all higher cards that have been played already and substract them
-                n_higher_cards_played = [card for card in cards_played if (card.suit == trick.trump_suit or card.suit == Suit.JOKER) and card.rank > self.rank]
-                n_higher_cards = 4 + Rank.ACE - self.rank - len(n_higher_cards_played)
+                # get all higher cards (trumps and wizards) that have been played
+                higher_cards_played = [card for card in cards_played if (card.suit == trick.trump_suit or card.suit == Suit.JOKER) and card.rank > self.rank]
+                # get all higher cards (trumps and wizards) in hand that are allowed to play
+                higher_cards_hand = [card for card in cards_legal if (card.suit == trick.trump_suit or card.suit == Suit.JOKER) and card.rank > self.rank]
+
+                n_higher_cards = 4 + Rank.ACE - self.rank - len(higher_cards_played) - len(higher_cards_hand)
+                n_cards_drawable = 60 - n_cards_played - n_cards_hand
                 # get probability that 0 higher cards are played -> that is the win prob of this card
-                prob_2 = self.calc_hypergeometric_prob(M=n_higher_cards, k=0, N=(59 - n_cards_played), n=n_turns_left_in_trick)
-                prob = comb(n_higher_cards, 0) \
-                       * comb((59 - n_cards_played) - n_higher_cards, n_turns_left_in_trick - 0) \
-                       / comb((59 - n_cards_played), n_turns_left_in_trick)
+                prob = self.calc_hypergeometric_prob(M=n_higher_cards, k=0, N=n_cards_drawable, n=n_turns_left_in_trick)
                 return prob
 
         # case this card is a leading suit card (but not a trump suit card, this case is covered above)
@@ -108,19 +110,18 @@ class Card:
             if len([card for card in trick.cards if card.suit == trick.trump_suit or (card.suit == leading_suit and card.rank > self.rank)]) > 0:
                 return 0
             else:
-                # get all higher leading suit cards and all trump cards that have been played already and substract them
-                n_higher_cards_played = [card for card in cards_played if(card.suit == Suit.JOKER or card.suit == trick.leading_suit) and card.rank > self.rank or card.suit == trick.trump_suit#
-                                         ]
+                # get all higher cards (leading suits, trumps, wizards) that have been played
+                higher_cards_played = [card for card in cards_played if(card.suit == Suit.JOKER or card.suit == leading_suit) and card.rank > self.rank or card.suit == trick.trump_suit]
+                # get all higher cards (leading suits, trumps and wizards) in hand that are allowed to play
+                higher_cards_hand = [card for card in cards_legal if (card.suit == Suit.JOKER or card.suit == leading_suit) and card.rank > self.rank or card.suit == trick.trump_suit]
                 # if jester is drawn as trump card, then there is no trump suit
                 if trick.trump_suit is None:
                     n_trump_cards = 0
                 else:
                     n_trump_cards = 13
-                n_higher_cards = 4 + Rank.ACE - self.rank + n_trump_cards - len(n_higher_cards_played)
-                prob_2 = self.calc_hypergeometric_prob(M=n_higher_cards, k=0, N=(59 - n_cards_played), n=n_turns_left_in_trick)
-                prob = comb(n_higher_cards, 0) \
-                       * comb((59 - n_cards_played) - n_higher_cards, n_turns_left_in_trick - 0) \
-                       / comb((59 - n_cards_played), n_turns_left_in_trick)
+                n_higher_cards = 4 + Rank.ACE - self.rank + n_trump_cards - len(higher_cards_played) - len(higher_cards_hand)
+                n_cards_drawable = 60 - n_cards_played - n_cards_hand
+                prob = self.calc_hypergeometric_prob(M=n_higher_cards, k=0, N=n_cards_drawable, n=n_turns_left_in_trick)
                 return prob
 
         # case this card is a "normal" card -> this means the suit does not match the leading suit and thus 0% chance of winning

@@ -67,7 +67,7 @@ class PlayerHuman(Player):
                 is_valid_input = False
         return selected_card
 
-    def select_suit(self):
+    def pick_suit(self):
         selected_suit = None
         print('You are the dealer and have drawn a WIZARD as the trump card. You may choose a suit.')
         self.print_current_hand()

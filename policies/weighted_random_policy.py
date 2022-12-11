@@ -40,7 +40,8 @@ class WeightedRandomPolicy:
             if v[0] <= rnd < v[1]:
                 selected_card = k
                 break
-
+        if selected_card is None:
+            raise Exception('No card selected. A card must be selected. Exiting.')
         return selected_card
 
     @staticmethod

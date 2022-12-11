@@ -33,7 +33,7 @@ class DynamicWeightedRandomPolicy(WeightedRandomPolicy):
         for card in legal_cards:
             if has_highest_card:
                 # calculate the dynamic probability to win if there is a chance for winning
-                prob = card.calc_dynamic_win_prob(trick, played_cards, number_of_players)
+                prob = card.calc_dynamic_win_prob(trick, played_cards, legal_cards, current_hand, number_of_players)
             else:
                 # if no chance of winning, use a-priori win probabilities to calculate loose probability
                 # so that 'bad' cards are played more likely
@@ -50,7 +50,6 @@ class DynamicWeightedRandomPolicy(WeightedRandomPolicy):
             if v[0] <= rnd < v[1]:
                 selected_card = k
                 break
-
         return selected_card
 
     @staticmethod

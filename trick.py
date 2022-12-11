@@ -65,4 +65,4 @@ class Trick:
         return leading_suit
 
     def __repr__(self):
-        return str(self.cards) + ' , trump: ' + str(self.trump_suit)
+        return 'Trump: ' + str(self.trump_suit) + ' ' + str(self.cards) + ' ' + str(self.played_by)

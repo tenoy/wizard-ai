@@ -6,7 +6,7 @@ from player import Player
 from policies.dynamic_weighted_random_policy import DynamicWeightedRandomPolicy
 from policies.random_policy import RandomPolicy
 from policies.weighted_random_policy import WeightedRandomPolicy
-from utils import get_legal_cards
+from utils import get_legal_cards, get_played_cards
 
 
 class PlayerComputer(Player):
@@ -40,17 +40,17 @@ class PlayerComputer(Player):
                         bid = bid + random.randint(-1, 1)
         return bid
 
-    def play(self, trick, leading_suit, trump_suit, bids):
-        legal_cards = get_legal_cards(self.current_hand, leading_suit)
+    def play(self, trick, bids):
+        legal_cards = get_legal_cards(self.current_hand, trick.leading_suit)
         match self.policy:
             case 'random':
-                selected_card = RandomPolicy.play(trick, leading_suit, trump_suit, bids, legal_cards, self.current_hand)
+                selected_card = RandomPolicy.play(legal_cards)
             case 'weighted_random':
-                selected_card = WeightedRandomPolicy.play(trick, leading_suit, trump_suit, bids, legal_cards, self.current_hand)
+                selected_card = WeightedRandomPolicy.play(trick, bids, legal_cards)
             case 'dynamic_weighted_random':
-                selected_card = DynamicWeightedRandomPolicy.play(trick, leading_suit, trump_suit, bids, legal_cards, self.current_hand)
+                selected_card = DynamicWeightedRandomPolicy.play(trick, bids, legal_cards, self.current_hand, get_played_cards(bids.keys()), len(bids))
 
-        self.played_card = selected_card
+        self.played_cards.appendleft(selected_card)
         self.current_hand.remove(selected_card)
         return selected_card
 

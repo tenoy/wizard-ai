@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from collections import deque
 
 from enum_suit import Suit
 from utils import contains_current_hand_leading_suit
@@ -18,7 +19,7 @@ class Player:
         self.history_bids = []
         self.history_scores = []
 
-        self.played_card = None
+        self.played_cards = deque()
 
     def is_valid_bid(self, bid, round_nr, previous_bids, players):
         if bid < 0:
@@ -58,7 +59,7 @@ class Player:
         pass
 
     @abstractmethod
-    def play(self, trick, leading_suit, trump_suit, bids):
+    def play(self, trick, bids):
         pass
 
     @abstractmethod

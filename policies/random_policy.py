@@ -10,7 +10,7 @@ class RandomPolicy():
         return bid
 
     @staticmethod
-    def play(trick, leading_suit, trump_suit, bids, legal_cards, current_hand):
+    def play(legal_cards):
         card_idx = random.randint(0, len(legal_cards)-1)
         selected_card = legal_cards[card_idx]
         return selected_card

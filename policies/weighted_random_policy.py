@@ -5,7 +5,7 @@ from enum_suit import Suit
 # static weighted random policy
 # bids using a-priori winning probabilities of cards in hand
 # plays cards in a similar way
-class WeightedRandomPolicy():
+class WeightedRandomPolicy:
 
     @staticmethod
     def make_bid(round_nr, current_hand, trump_suit):
@@ -19,16 +19,15 @@ class WeightedRandomPolicy():
             if rnd <= prob:
                 bid = bid + 1
 
-        # bid = random.randint(0, round_nr)
         return bid
 
     @staticmethod
-    def play(trick, leading_suit, trump_suit, bids, legal_cards, current_hand):
-        #build 'probability intervals' whose size correspond to their probability
+    def play(trick, bids, legal_cards):
+        # build 'probability intervals' whose size correspond to their 'probability'
         interval = 0
         probs_dict = {}
         for card in legal_cards:
-            if card.suit == trump_suit:
+            if card.suit == trick.trump_suit:
                 prob = card.win_prob_trump
             else:
                 prob = card.win_prob
@@ -42,7 +41,6 @@ class WeightedRandomPolicy():
                 selected_card = k
                 break
 
-        #selected_card = current_hand[card_idx]
         return selected_card
 
     @staticmethod

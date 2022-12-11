@@ -7,8 +7,7 @@ from enum_suit import Suit
 from player_computer import PlayerComputer
 from player_human import PlayerHuman
 from state import State
-from utils import get_highest_card_in_trick
-
+from trick import Trick
 
 
 def simulate_episode(state):
@@ -53,14 +52,13 @@ def simulate_episode(state):
 
         # Each player plays a card one after another in each trick j of round i
         for j in range(0, i, 1):
-            trick = []
-            leading_suit = None
+            trick = Trick(trump_suit=trump_suit, leading_suit=None, cards=[], played_by=[])
             for player in players:
-                played_card = player.play(trick, leading_suit, trump_suit, bids)
-                trick.append(played_card)
-                if leading_suit is None:
-                    leading_suit = get_leading_suit(trick)
-            highest_card = get_highest_card_in_trick(trick, trump_suit, leading_suit)
+                played_card = player.play(trick, bids)
+                trick.add_card(played_card, player)
+                if trick.leading_suit is None:
+                    trick.leading_suit = trick.get_leading_suit()
+            highest_card = trick.get_highest_trick_card()
             win_count_card = winning_cards.setdefault(highest_card, 0)
             winning_cards[highest_card] = win_count_card + 1
             # evaluate trick winning player
@@ -68,7 +66,7 @@ def simulate_episode(state):
             rotate_by = -1
             for k in range(0, len(players), 1):
                 player = players[k]
-                if player.played_card == highest_card:
+                if player.played_cards[0] == highest_card:
                     player.current_tricks_won = player.current_tricks_won + 1
                     winning_player = player
                     rotate_by = len(players) - k
@@ -76,8 +74,9 @@ def simulate_episode(state):
                 if player.player_type == 'human':
                     print('Trump suit: ' + str(trump_suit))
                     print('Cards in trick: ', end=' ')
-                    print(*trick, sep=', ')
+                    print(*trick.cards, sep=', ')
                     print('Winning card: ' + str(highest_card) + ' from Player ' + str(winning_player.number))
+                    print('#############################################################')
             players.rotate(rotate_by)
 
         # Calc score for each player and reset player hands etc
@@ -86,15 +85,17 @@ def simulate_episode(state):
                 player.current_score = player.current_score + 20 + player.current_tricks_won * 10
             else:
                 player.current_score = player.current_score - (abs(player.current_tricks_won - player.current_bid)) * 10
+            # reset round dependent player vars
             player.current_tricks_won = 0
             player.current_bid = -1
             player.current_hand = []
-            player.played_card = None
+            player.played_cards = deque()
             print(str(player) + ', Score: ' + str(player.current_score))
 
         # next round another player starts
         players_game_order.rotate(1)
         print('Round ' + str(i) + ' done')
+        print('#############################################################')
     # evaluate winning player
     highest_score = -10000000000
     highest_score_player = None
@@ -122,24 +123,25 @@ for i in range(1, 5, 1):
         #print(c)
 
 for i in range(1, 5, 1):
-    c = Card(Suit.JOKER, Rank.JESTER)
+    c = Card(Suit.JOKER, Rank.JESTER, i)
     deck.append(c)
     #print(c)
 
 for i in range(1, 5, 1):
-    c = Card(Suit.JOKER, Rank.WIZARD)
+    c = Card(Suit.JOKER, Rank.WIZARD, i)
     deck.append(c)
     #print(c)
 
 # put in game class or something similar
 number_of_players = 2
 players_initial_order = deque()
-for i in range(1, number_of_players+1, 1):
-    p = PlayerComputer(i, 'computer', 'dynamic_weighted_random')
-    players_initial_order.append(p)
-players_initial_order.append(PlayerComputer(3, 'computer', 'weighted_random'))
-players_initial_order.append(PlayerComputer(4, 'computer', 'dynamic_weighted_random'))
-# players_initial_order.append(PlayerHuman(5, 'human'))
+players_initial_order.append(PlayerComputer(1, 'computer', 'dynamic_weighted_random'))
+players_initial_order.append(PlayerComputer(2, 'computer', 'weighted_random'))
+#players_initial_order.append(PlayerComputer(3, 'computer', 'dynamic_weighted_random'))
+#players_initial_order.append(PlayerComputer(4, 'computer', 'dynamic_weighted_random'))
+#players_initial_order.append(PlayerComputer(5, 'computer', 'dynamic_weighted_random'))
+#players_initial_order.append(PlayerComputer(6, 'computer', 'dynamic_weighted_random'))
+#players_initial_order.append(PlayerHuman(7, 'human'))
 
 s0 = State(players_initial_order, 1, [], deck, {}, None)
 winning_cards = {}

@@ -36,14 +36,14 @@ class PlayerHuman(Player):
 
         return bid
 
-    def play(self, trick, leading_suit, trump_suit, bids):
+    def play(self, trick, bids):
         selected_card = None
         idx = -1
         print('Bids: ', end=' ')
         print(*bids.items())
-        print('Trump suit: ' + str(trump_suit))
+        print('Trump suit: ' + str(trick.trump_suit))
         print('Cards in trick:', end=' ')
-        print(*trick, sep=', ')
+        print(*trick.cards, sep=', ')
         self.print_current_hand()
         is_valid_input = False
         while not is_valid_input:
@@ -53,16 +53,15 @@ class PlayerHuman(Player):
                 if 0 < int_human_input <= len(self.current_hand):
                     idx = int_human_input - 1
                     selected_card = self.current_hand[idx]
-                    if self.is_valid_card(selected_card, leading_suit):
-                        self.played_card = selected_card
+                    if self.is_valid_card(selected_card, trick.leading_suit):
+                        self.played_cards.appendleft(selected_card)
                         self.current_hand.remove(selected_card)
                         is_valid_input = True
                     else:
                         print('Invalid Card. You have at least one card that fits the suit. You must either play a card with fitting suit or a joker.')
                         is_valid_input = False
                 else:
-                    print('Invalid input. Input must be a number between 1 and ' + str(
-                        len(self.current_hand)) + '.')
+                    print('Invalid input. Input must be a number between 1 and ' + str(len(self.current_hand)) + '.')
                     is_valid_input = False
             else:
                 is_valid_input = False

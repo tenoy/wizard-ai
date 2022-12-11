@@ -1,7 +1,8 @@
 import random
 from enum_suit import Suit
 from policies.weighted_random_policy import WeightedRandomPolicy
-from utils import get_highest_legal_card, get_highest_card_in_trick
+from trick import Trick
+from utils import get_highest_legal_card
 
 
 # dynamic weighted random policy
@@ -11,38 +12,45 @@ class DynamicWeightedRandomPolicy(WeightedRandomPolicy):
 
     @staticmethod
     def make_bid(round_nr, current_hand, trump_suit):
+        # todo: might be different from static, since the probability changes with position of player at least in first round
         bid = WeightedRandomPolicy.make_bid(round_nr, current_hand, trump_suit)
         return bid
 
     @staticmethod
-    def play(trick, leading_suit, trump_suit, bids, legal_cards, current_hand):
+    def play(trick, bids, legal_cards, current_hand, played_cards, number_of_players):
         # selection logic is the same as weighted random policy if trick is empty
         selected_card = None
-        if len(trick) == 0:
-            selected_card = WeightedRandomPolicy.play(trick, leading_suit, trump_suit, bids, legal_cards, current_hand)
-        else:
-            highest_card_legal = get_highest_legal_card(legal_cards, trump_suit, leading_suit)
-            trick_extended = list(trick)
-            trick_extended.append(highest_card_legal)
-            highest_card_trick = get_highest_card_in_trick(trick_extended, trump_suit, leading_suit)
-            # case where the highest legal card would be highest card in trick (so far)
-            # note that the is operator is used here, since == would be wrong (e.g. both trick and hand contain wizard)
-            if highest_card_trick is highest_card_legal:
-                print('blub')
+        highest_card_legal = get_highest_legal_card(legal_cards, trick.trump_suit, trick.leading_suit)
+        trick_extended = Trick(trick.trump_suit, trick.leading_suit)
+        trick_extended.cards = list(trick.cards)
+        trick_extended.cards.append(highest_card_legal)
+        highest_card_trick = trick_extended.get_highest_trick_card()
+        # check if the highest legal card would be the highest card in trick (so far)
+        # note that the is operator is used here, since == would be wrong (e.g. both trick and hand contain wizard)
+        has_highest_card = highest_card_trick is highest_card_legal
+        interval = 0
+        probs_dict = {}
+        for card in legal_cards:
+            if has_highest_card:
+                # calculate the dynamic probability to win if there is a chance for winning
+                prob = card.calc_dynamic_win_prob(trick, played_cards, number_of_players)
             else:
-                print('bla')
+                # if no chance of winning, use a-priori win probabilities to calculate loose probability
+                # so that 'bad' cards are played more likely
+                if card.suit == trick.trump_suit:
+                    prob = 1 - card.win_prob_trump
+                else:
+                    prob = 1 - card.win_prob
+            probs_dict[card] = (interval, interval + prob)
+            interval = interval + prob
 
-            result = DynamicWeightedRandomPolicy.build_intervals(legal_cards, trump_suit, 1)
-            probs_dict = result[0]
-            interval = result[1]
-            rnd = random.uniform(0, interval)
-            # get the corresponding card into which rnd falls from probs_dict
-            for k, v in probs_dict.items():
-                if v[0] <= rnd < v[1]:
-                    selected_card = k
-                    break
+        rnd = random.uniform(0, interval)
+        # get the corresponding card into which rnd falls from probs_dict
+        for k, v in probs_dict.items():
+            if v[0] <= rnd < v[1]:
+                selected_card = k
+                break
 
-            #selected_card = current_hand[card_idx]
         return selected_card
 
     @staticmethod
@@ -60,23 +68,3 @@ class DynamicWeightedRandomPolicy(WeightedRandomPolicy):
             selected_suit = cards_without_joker[rnd_idx].suit
 
         return selected_suit
-
-    @staticmethod
-    def build_intervals(legal_cards, trump_suit, win_prob_flag):
-        # build 'probability intervals' whose size correspond to their probability
-        interval = 0
-        probs_dict = {}
-        for card in legal_cards:
-            if card.suit == trump_suit:
-                if win_prob_flag == 1:
-                    prob = card.win_prob_trump
-                else:
-                    prob = 1 - card.win_prob_trump
-            else:
-                if win_prob_flag == 1:
-                    prob = card.win_prob
-                else:
-                    prob = 1 - card.win_prob
-            probs_dict[card] = (interval, interval + prob)
-            interval = interval + prob
-        return probs_dict, interval

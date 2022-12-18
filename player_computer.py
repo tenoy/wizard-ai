@@ -7,7 +7,6 @@ from player import Player
 from policies.dynamic_weighted_random_policy import DynamicWeightedRandomPolicy
 from policies.random_policy import RandomPolicy
 from policies.weighted_random_policy import WeightedRandomPolicy
-from utils import get_played_cards
 
 
 class PlayerComputer(Player):
@@ -18,43 +17,40 @@ class PlayerComputer(Player):
 
     def make_bid(self, round_nr, previous_bids, players, trump_suit):
         # sum of bids is not allowed to be equal to the number of the round
-        # bid = random.randint(0, round_nr)
-        bid = self.calculate_bid()
+
+        bid = self.calculate_bid(round_nr, previous_bids, players, trump_suit)
         while not self.is_valid_bid(bid, round_nr, previous_bids, players):
-            bid = self.recalculate_bid()
+            bid = self.recalculate_bid(bid, round_nr, previous_bids, players, trump_suit)
+
+        """
         match self.policy:
             case 'random':
-                bid = RandomPolicy.make_bid(round_nr)
+                bid = RandomPolicy.calculate_bid(round_nr)
                 while not self.is_valid_bid(bid, round_nr, previous_bids, players):
-                    bid = RandomPolicy.make_bid(round_nr)
+                    bid = RandomPolicy.recalculate_bid(round_nr)
             case 'weighted_random':
-                bid = WeightedRandomPolicy.make_bid(round_nr, self.current_hand, trump_suit)
+                bid = WeightedRandomPolicy.calculate_bid(round_nr, self.current_hand, trump_suit)
                 while not self.is_valid_bid(bid, round_nr, previous_bids, players):
-                    if bid == 0:
-                        bid = bid + 1
-                    else:
-                        bid = bid + random.randint(-1, 1)
+                    bid = WeightedRandomPolicy.recalculate_bid(bid)
             case 'dynamic_weighted_random':
-                bid = DynamicWeightedRandomPolicy.make_bid(round_nr, self.current_hand, trump_suit)
-                # todo: avoid duplicated code
+                bid = DynamicWeightedRandomPolicy.calculate_bid(round_nr, self.current_hand, trump_suit)
                 while not self.is_valid_bid(bid, round_nr, previous_bids, players):
-                    if bid == 0:
-                        bid = bid + 1
-                    else:
-                        bid = bid + random.randint(-1, 1)
+                    bid = DynamicWeightedRandomPolicy.recalculate_bid(bid)
+        """
         return bid
 
     def play(self, trick, bids):
-        legal_cards = get_legal_cards(self.current_hand, trick.leading_suit)
-        selected_card = self.select_card(legal_cards)
+        legal_cards = self.get_legal_cards(trick.leading_suit)
+        selected_card = self.select_card(trick, bids, legal_cards, self.current_hand, self.get_played_cards(bids.keys()), bids.keys())
+        """
         match self.policy:
             case 'random':
-                selected_card = RandomPolicy.play(legal_cards)
+                selected_card = RandomPolicy.select_card(legal_cards)
             case 'weighted_random':
-                selected_card = WeightedRandomPolicy.play(trick, bids, legal_cards)
+                selected_card = WeightedRandomPolicy.select_card(trick, legal_cards)
             case 'dynamic_weighted_random':
-                selected_card = DynamicWeightedRandomPolicy.play(trick, bids, legal_cards, self.current_hand, get_played_cards(bids.keys()), len(bids))
-
+                selected_card = DynamicWeightedRandomPolicy.select_card(trick, bids, legal_cards, self.current_hand, self.get_played_cards(bids.keys()), bids.keys())
+        """
         if selected_card is None:
             raise Exception('No card selected. A card must be selected. Exiting.')
 
@@ -63,6 +59,8 @@ class PlayerComputer(Player):
         return selected_card
 
     def pick_suit(self):
+        selected_suit = self.select_suit()
+        """
         match self.policy:
             case 'random':
                 selected_suit = RandomPolicy.select_suit()
@@ -70,13 +68,13 @@ class PlayerComputer(Player):
                 selected_suit = WeightedRandomPolicy.select_suit(self.current_hand)
             case 'dynamic_weighted_random':
                 selected_suit = DynamicWeightedRandomPolicy.select_suit(self.current_hand)
-
+        """
         if selected_suit is None:
             raise Exception('No suit selected. A suit must be selected. Exiting.')
         return selected_suit
 
     @abstractmethod
-    def select_card(self, legal_cards):
+    def select_card(self):
         pass
 
     @abstractmethod
@@ -87,11 +85,9 @@ class PlayerComputer(Player):
     def recalculate_bid(self):
         pass
 
-    def has_leading_suit_in_hand(self, leading_suit):
-        for card in self.current_hand:
-            if card.suit == leading_suit:
-                return True
-        return False
+    @abstractmethod
+    def select_suit(self):
+        pass
 
     def get_legal_cards(self, leading_suit):
         # prepare set of cards that are allowed to play so that the policies dont have to deal with that again and again

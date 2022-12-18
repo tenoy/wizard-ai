@@ -1,37 +1,28 @@
 import random
+
+from enum_rank import Rank
 from enum_suit import Suit
+from policies.player_computer_weighted_random import PlayerComputerWeightedRandom
 from policies.weighted_random_policy import WeightedRandomPolicy
 from trick import Trick
-from utils import get_highest_legal_card
 
 
 # dynamic weighted random policy
 # bids using a-priori winning probabilities of cards in hand (same as static policy)
 # plays cards assessing the current trick and the current hand and calculates winning probabilities based on these
-class DynamicWeightedRandomPolicy(WeightedRandomPolicy):
+class PlayerComputerDynamicWeightedRandom(PlayerComputerWeightedRandom):
 
-    @staticmethod
-    def calculate_bid(round_nr, current_hand, trump_suit):
-        bid = WeightedRandomPolicy.calculate_bid(round_nr, current_hand, trump_suit)
-        return bid
-
-    @staticmethod
-    def recalculate_bid(bid):
-        bid = WeightedRandomPolicy.recalculate_bid(bid)
-        return bid
-
-    @staticmethod
-    def select_card(trick, bids, legal_cards, current_hand, played_cards, players):
+    def select_card(self, trick, bids, legal_cards, current_hand, played_cards, players):
         # selection logic is the same as weighted random policy if trick is empty
         selected_card = None
-        # highest_card_legal = self.get_highest_legal_card(legal_cards, trick.trump_suit, trick.leading_suit)
-        # trick_extended = Trick(trick.trump_suit, trick.leading_suit)
-        # trick_extended.cards = list(trick.cards)
-        # trick_extended.cards.append(highest_card_legal)
-        # highest_card_trick = trick_extended.get_highest_trick_card()
+        #highest_card_legal = self.get_highest_legal_card(legal_cards, trick.trump_suit, trick.leading_suit)
+        #trick_extended = Trick(trick.trump_suit, trick.leading_suit)
+        #trick_extended.cards = list(trick.cards)
+        #trick_extended.cards.append(highest_card_legal)
+        #highest_card_trick = trick_extended.get_highest_trick_card()
         # check if the highest legal card would be the highest card in trick (so far)
         # note that the is operator is used here, since == would be wrong (e.g. both trick and hand contain wizard)
-        # has_highest_card = highest_card_trick is highest_card_legal
+        #has_highest_card = highest_card_trick is highest_card_legal
         interval = 0
         probs_dict = {}
         for card in legal_cards:
@@ -79,10 +70,9 @@ class DynamicWeightedRandomPolicy(WeightedRandomPolicy):
             raise Exception('No card selected. A card must be selected. Exiting.')
         return selected_card
 
-    @staticmethod
-    def select_suit(current_hand):
+    def select_suit(self):
         cards_without_joker = []
-        for card in current_hand:
+        for card in self.current_hand:
             if card.suit is not Suit.JOKER:
                 cards_without_joker.append(card)
 

@@ -6,9 +6,12 @@ from enum_rank import Rank
 from enum_suit import Suit
 from player_computer import PlayerComputer
 from player_human import PlayerHuman
+from policies.player_computer_dynamic_weighted_random import PlayerComputerDynamicWeightedRandom
 from policies.player_computer_random import PlayerComputerRandom
+from policies.player_computer_weighted_random import PlayerComputerWeightedRandom
 from state import State
 from trick import Trick
+import datetime
 
 
 def simulate_episode(state):
@@ -91,12 +94,12 @@ def simulate_episode(state):
             player.current_bid = -1
             player.current_hand = []
             player.played_cards = deque()
-            print(str(player) + ', Score: ' + str(player.current_score))
+            #print(str(player) + ', Score: ' + str(player.current_score))
 
         # next round another player starts
         players_game_order.rotate(1)
-        print('Round ' + str(i) + ' done')
-        print('#############################################################')
+        #print('Round ' + str(i) + ' done')
+        #print('#############################################################')
     # evaluate winning player
     highest_score = -10000000000
     highest_score_player = None
@@ -136,17 +139,28 @@ for i in range(1, 5, 1):
 # put in game class or something similar
 number_of_players = 2
 players_initial_order = deque()
-players_initial_order.append(PlayerComputer(1, 'computer', 'dynamic_weighted_random'))
-players_initial_order.append(PlayerComputer(2, 'computer', 'weighted_random'))
-players_initial_order.append(PlayerComputerRandom(8, 'computer', "randomChild"))
-#players_initial_order.append(PlayerComputer(3, 'computer', 'dynamic_weighted_random'))
+players_initial_order.append(PlayerComputerRandom(1, 'computer', "random"))
+players_initial_order.append(PlayerComputerWeightedRandom(2, 'computer', "weighted_random"))
+players_initial_order.append(PlayerComputerDynamicWeightedRandom(3, 'computer', "dynamic_weighted_random"))
+players_initial_order.append(PlayerComputerDynamicWeightedRandom(4, 'computer', "dynamic_weighted_random"))
+# players_initial_order.append(PlayerComputer(1, 'computer', 'random'))
+# players_initial_order.append(PlayerComputer(2, 'computer', 'weighted_random'))
+# players_initial_order.append(PlayerComputer(3, 'computer', 'dynamic_weighted_random'))
+# players_initial_order.append(PlayerComputer(4, 'computer', 'dynamic_weighted_random'))
 #players_initial_order.append(PlayerComputer(4, 'computer', 'dynamic_weighted_random'))
 #players_initial_order.append(PlayerComputer(5, 'computer', 'dynamic_weighted_random'))
 #players_initial_order.append(PlayerComputer(6, 'computer', 'dynamic_weighted_random'))
 #players_initial_order.append(PlayerHuman(7, 'human'))
 
+timestamp_start = datetime.datetime.now()
+
 s0 = State(players_initial_order, 1, [], deck, {}, None)
 winning_cards = {}
 for i in range(0, 1000):
     simulate_episode(s0)
+timestamp_end = datetime.datetime.now()
+delta = timestamp_end - timestamp_start
+print(f"Time difference is {delta.total_seconds()} seconds")
 print('done')
+
+

@@ -2,15 +2,19 @@ import random
 from enum_suit import Suit
 
 
-class RandomPolicy():
+class RandomPolicy:
 
     @staticmethod
-    def make_bid(round_nr):
+    def calculate_bid(round_nr):
         bid = random.randint(0, round_nr)
         return bid
 
     @staticmethod
-    def play(legal_cards):
+    def recalculate_bid(round_nr):
+        return RandomPolicy.calculate_bid(round_nr)
+
+    @staticmethod
+    def select_card(legal_cards):
         card_idx = random.randint(0, len(legal_cards)-1)
         selected_card = legal_cards[card_idx]
         return selected_card

@@ -2,7 +2,6 @@ from abc import abstractmethod
 from collections import deque
 
 from enum_suit import Suit
-from utils import has_leading_suit_in_hand
 
 
 class Player:
@@ -38,6 +37,12 @@ class Player:
             print('(' + str(k + 1) + ') ' + str(self.current_hand[k]) + ' ', end=' ')
         print('')
 
+    def has_leading_suit_in_hand(self, leading_suit):
+        for card in self.current_hand:
+            if card.suit == leading_suit:
+                return True
+        return False
+
     def is_valid_card(self, selected_card, leading_suit):
         if leading_suit is None:
             return True
@@ -46,7 +51,7 @@ class Player:
         elif selected_card.suit == Suit.JOKER:
             return True
         else:
-            if has_leading_suit_in_hand(self.current_hand, leading_suit):
+            if self.has_leading_suit_in_hand(self.current_hand, leading_suit):
                 if selected_card.suit == leading_suit:
                     return True
                 else:
@@ -59,7 +64,7 @@ class Player:
         pass
 
     @abstractmethod
-    def play(self, trick, bids):
+    def play(self):
         pass
 
     @abstractmethod
@@ -71,6 +76,13 @@ class Player:
 
     def __repr__(self):
         return 'Player_' + str(self.number)
+
+    @staticmethod
+    def get_played_cards(players):
+        played_cards = list()
+        for player in players:
+            played_cards.extend(player.played_cards)
+        return played_cards
 
 
 

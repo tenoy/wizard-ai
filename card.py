@@ -49,7 +49,6 @@ class Card:
             # All other cards are considered higher except the own suit and jester
             not_leading_suit_prob = (4 + (len(Rank)-2)*3 + num_of_cards_higher) / 59
             prob = 0.25 * leading_suit_prob + 0.75 * not_leading_suit_prob
-            # num_of_cards_higher = num_of_cards_higher * (len(Suit)-2) + (len(Rank)-2) * 2 + 4
         # if type of suit is trump, then count only higher trump cards and wizards
         if suit_type == 'trump':
             num_of_cards_higher = num_of_cards_higher + 4

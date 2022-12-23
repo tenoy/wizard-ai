@@ -21,25 +21,43 @@ class PlayerComputerWeightedRandom(PlayerComputer):
 
         return bid
 
-    def recalculate_bid(self, bid, round_nr=None, previous_bids=None, players=None, trump_suit=None):
+    def recalculate_bid(self, bid=None, round_nr=None, previous_bids=None, players=None, trump_suit=None):
         if bid == 0:
             bid = 1
         else:
             bid = bid + random.randint(-1, 1)
         return bid
 
-    def select_card(self, trick, bids, legal_cards, current_hand, played_cards, number_of_players):
+    def select_card(self, trick=None, bids=None, legal_cards=None, current_hand=None, played_cards=None, number_of_players=None):
+        selected_card = None
+        probs_dict = self.build_probs_dict(legal_cards, trick.trump_suit)
+        selected_card = self.select_card_in_probs_dict(probs_dict)
+        if selected_card is None:
+            raise Exception('No card selected. A card must be selected. Exiting.')
+        return selected_card
+
+    def build_probs_dict(self, cards, trump_suit, win_prob=True):
         # build 'probability intervals' whose size correspond to their 'probability'
         interval = 0
         probs_dict = {}
-        # todo: in eigene methode "build_interval", damit der dynamic weighted random player es benutzen kann
-        for card in legal_cards:
-            if card.suit == trick.trump_suit:
-                prob = card.win_prob_trump
+        for card in cards:
+            if card.suit == trump_suit:
+                if win_prob:
+                    prob = card.win_prob_trump
+                else:
+                    prob = 1 - card.win_prob_trump
             else:
-                prob = card.win_prob
+                if win_prob:
+                    prob = card.win_prob
+                else:
+                    prob = 1 - card.win_prob
             probs_dict[card] = (interval, interval + prob)
             interval = interval + prob
+        return probs_dict
+
+    def select_card_in_probs_dict(self, probs_dict):
+        # dicts are ordered / keep insertion order since python 3.7!
+        interval = [*probs_dict.values()][-1][-1]
         rnd = random.uniform(0, interval)
         # get the corresponding card into which rnd falls from probs_dict
         selected_card = None
@@ -47,8 +65,6 @@ class PlayerComputerWeightedRandom(PlayerComputer):
             if v[0] <= rnd < v[1]:
                 selected_card = k
                 break
-        if selected_card is None:
-            raise Exception('No card selected. A card must be selected. Exiting.')
         return selected_card
 
     def select_suit(self):

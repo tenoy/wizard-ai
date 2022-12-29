@@ -22,7 +22,7 @@ class PlayerComputer(Player):
 
     def play(self, trick, bids):
         legal_cards = self.get_legal_cards(trick.leading_suit)
-        selected_card = self.select_card(trick, bids, legal_cards, self.current_hand, self.get_played_cards(bids.keys()), bids.keys())
+        selected_card = self.select_card(trick=trick, bids=bids, legal_cards=legal_cards, current_hand=self.current_hand, played_cards=self.get_played_cards(bids.keys()), players=bids.keys())
 
         if selected_card is None:
             raise Exception('No card selected. A card must be selected. Exiting.')

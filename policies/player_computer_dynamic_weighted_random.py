@@ -24,21 +24,9 @@ class PlayerComputerDynamicWeightedRandom(PlayerComputerWeightedRandom):
             prob_sum = prob_sum + v[1]
         # if there is zero chance of winning, calc "static loosing probs" and select card with highest loosing prob
         if prob_sum == 0:
-            interval = 0
-            for card in probs_dict.keys():
-                if card.suit == trick.trump_suit:
-                    prob = 1 - card.win_prob_trump
-                else:
-                    prob = 1 - card.win_prob
-                probs_dict[card] = (interval, interval + prob)
-                interval = interval + prob
-        rnd = random.uniform(0, interval)
-        # get the corresponding card into which rnd falls from probs_dict
-        for k, v in probs_dict.items():
-            if v[0] <= rnd < v[1]:
-                selected_card = k
-                break
+            probs_dict = self.build_probs_dict(cards=legal_cards, trump_suit=trick.trump_suit, players=players, win_prob=False)
 
+        selected_card = self.select_card_in_probs_dict(probs_dict)
         if selected_card is None:
             raise Exception('No card selected. A card must be selected. Exiting.')
         return selected_card

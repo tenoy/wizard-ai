@@ -7,6 +7,7 @@ from enum_suit import Suit
 from player_computer import PlayerComputer
 from player_human import PlayerHuman
 from policies.player_computer_dynamic_weighted_random import PlayerComputerDynamicWeightedRandom
+from policies.player_computer_myopic import PlayerComputerHeuristic
 from policies.player_computer_random import PlayerComputerRandom
 from policies.player_computer_weighted_random import PlayerComputerWeightedRandom
 from state import State
@@ -142,6 +143,7 @@ players_initial_order = deque()
 players_initial_order.append(PlayerComputerRandom(1, 'computer', "random"))
 players_initial_order.append(PlayerComputerWeightedRandom(2, 'computer', "weighted_random"))
 players_initial_order.append(PlayerComputerDynamicWeightedRandom(3, 'computer', "dynamic_weighted_random"))
+players_initial_order.append(PlayerComputerHeuristic(4, 'computer', "heuristic"))
 # players_initial_order.append(PlayerComputerDynamicWeightedRandom(4, 'computer', "dynamic_weighted_random"))
 # players_initial_order.append(PlayerComputer(1, 'computer', 'random'))
 # players_initial_order.append(PlayerComputer(2, 'computer', 'weighted_random'))

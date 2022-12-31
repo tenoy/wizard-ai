@@ -24,9 +24,9 @@ class PlayerComputerDynamicWeightedRandom(PlayerComputerWeightedRandom):
             prob_sum = prob_sum + v[1]
         # if there is zero chance of winning, calc "static loosing probs" and select card with highest loosing prob
         if prob_sum == 0:
-            probs_dict = self.build_probs_dict(cards=legal_cards, trump_suit=trick.trump_suit, players=players, win_prob=False)
+            probs_dict = self.build_static_probs_interval_dict(cards=legal_cards, trump_suit=trick.trump_suit, players=players, win_prob=False)
 
-        selected_card = self.select_card_in_probs_dict(probs_dict)
+        selected_card = self.select_card_in_static_probs_interval_dict(probs_dict)
         if selected_card is None:
             raise Exception('No card selected. A card must be selected. Exiting.')
         return selected_card

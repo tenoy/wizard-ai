@@ -27,18 +27,18 @@ class PlayerComputerWeightedRandom(PlayerComputer):
 
     def select_card(self, trick=None, bids=None, legal_cards=None, current_hand=None, played_cards=None, players=None):
         selected_card = None
-        probs_dict = self.build_probs_dict(cards=legal_cards, trump_suit=trick.trump_suit, players=players)
+        probs_dict = self.build_static_probs_interval_dict(cards=legal_cards, trump_suit=trick.trump_suit, players=players)
         prob_sum = 0
         for v in probs_dict.values():
             prob_sum = prob_sum + v[1]
         if prob_sum == 0:
-            probs_dict = self.build_probs_dict(cards=legal_cards, trump_suit=trick.trump_suit, players=players, win_prob=False)
-        selected_card = self.select_card_in_probs_dict(probs_dict)
+            probs_dict = self.build_static_probs_interval_dict(cards=legal_cards, trump_suit=trick.trump_suit, players=players, win_prob=False)
+        selected_card = self.select_card_in_static_probs_interval_dict(probs_dict)
         if selected_card is None:
             raise Exception('No card selected. A card must be selected. Exiting.')
         return selected_card
 
-    def build_probs_dict(self, cards, trump_suit, players, win_prob=True):
+    def build_static_probs_interval_dict(self, cards, trump_suit, players, win_prob=True):
         # build 'probability intervals' whose size correspond to their 'probability'
         interval = 0
         probs_dict = {}
@@ -50,7 +50,7 @@ class PlayerComputerWeightedRandom(PlayerComputer):
             interval = interval + prob
         return probs_dict
 
-    def select_card_in_probs_dict(self, probs_dict):
+    def select_card_in_static_probs_interval_dict(self, probs_dict):
         # get upper bound of all intervals
         # dicts are ordered / keep insertion order since python 3.7!
         interval = [*probs_dict.values()][-1][-1]

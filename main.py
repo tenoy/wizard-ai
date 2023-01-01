@@ -37,11 +37,12 @@ for i in range(1, 5, 1):
 # put in game class or something similar
 number_of_players = 2
 players_initial_order = deque()
-players_initial_order.append(PlayerComputerRollout('computer', "rollout"))
+
 players_initial_order.append(PlayerComputerRandom('computer', "random"))
 players_initial_order.append(PlayerComputerWeightedRandom('computer', "weighted_random"))
 players_initial_order.append(PlayerComputerDynamicWeightedRandom('computer', "dynamic_weighted_random"))
 players_initial_order.append(PlayerComputerMyopic('computer', "heuristic"))
+players_initial_order.append(PlayerComputerRollout('computer', "rollout"))
 # players_initial_order.append(PlayerComputerDynamicWeightedRandom(4, 'computer', "dynamic_weighted_random"))
 # players_initial_order.append(PlayerComputer(1, 'computer', 'random'))
 # players_initial_order.append(PlayerComputer(2, 'computer', 'weighted_random'))
@@ -54,7 +55,7 @@ players_initial_order.append(PlayerComputerMyopic('computer', "heuristic"))
 
 timestamp_start = datetime.datetime.now()
 
-s0 = State(players_initial_order, 1, [], deck, {})
+s0 = State(players_initial_order, 1, Trick(), deck, {})
 winning_cards = {}
 number_of_rounds = int(60 / len(players_initial_order))
 for i in range(0, 1000):

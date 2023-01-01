@@ -22,11 +22,12 @@ class Player:
 
         self.played_cards = deque()
 
-    def is_valid_bid(self, bid, round_nr, previous_bids, players):
+    @staticmethod
+    def is_valid_bid(state, bid):
         if bid < 0:
             return False
-        if len(previous_bids) == len(players) - 1:
-            if sum(previous_bids.values()) + bid == round_nr:
+        if len(state.bids) == len(state.players) - 1:
+            if sum(state.bids.values()) + bid == state.round_nr:
                 return False
             else:
                 return True
@@ -62,7 +63,7 @@ class Player:
                 return True
 
     @abstractmethod
-    def make_bid(self, round_nr, previous_bids, players, trump_suit):
+    def make_bid(self):
         pass
 
     @abstractmethod

@@ -8,17 +8,17 @@ from player_computer import PlayerComputer
 # plays cards in a similar way
 class PlayerComputerWeightedRandom(PlayerComputer):
 
-    def calculate_bid(self, round_nr=None, previous_bids=None, players=None, trump_suit=None):
+    def calculate_bid(self, state):
         bid = 0
         for card in self.current_hand:
             rnd = random.uniform(0, 1)
-            prob = card.calc_static_win_prob(self.current_hand, trump_suit, players)
+            prob = card.calc_static_win_prob(self.current_hand, state.trick.trump_suit, state.players)
             if rnd <= prob:
                 bid = bid + 1
 
         return bid
 
-    def recalculate_bid(self, bid=None, round_nr=None, previous_bids=None, players=None, trump_suit=None):
+    def recalculate_bid(self, state, bid):
         if bid == 0:
             bid = 1
         else:
@@ -63,7 +63,7 @@ class PlayerComputerWeightedRandom(PlayerComputer):
                 break
         return selected_card
 
-    def select_suit(self):
+    def select_suit(self, state):
         cards_without_joker = []
         for card in self.current_hand:
             if card.suit is not Suit.JOKER:

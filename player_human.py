@@ -12,7 +12,7 @@ class PlayerHuman(Player):
             is_valid = False
         return is_valid
 
-    def make_bid(self, round_nr, previous_bids, players, trump_suit):
+    def make_bid(self):
         bid = -1
         print('Trump suit: ' + str(trump_suit))
         print('Current hand:')

@@ -12,11 +12,11 @@ class PlayerComputer(Player):
         super(PlayerComputer, self).__init__(player_type)
         self.policy = policy
 
-    def make_bid(self, round_nr, previous_bids, players, trump_suit):
-        bid = self.calculate_bid(round_nr, previous_bids, players, trump_suit)
-
-        while not self.is_valid_bid(bid, round_nr, previous_bids, players):
-            bid = self.recalculate_bid(bid, round_nr, previous_bids, players, trump_suit)
+    def make_bid(self, state):
+        bid = self.calculate_bid(state)
+        state.bids
+        while not self.is_valid_bid(state, bid):
+            bid = self.recalculate_bid(state, bid)
 
         return bid
 
@@ -31,7 +31,7 @@ class PlayerComputer(Player):
         self.current_hand.remove(selected_card)
         return selected_card
 
-    def pick_suit(self):
+    def pick_suit(self, state):
         selected_suit = self.select_suit()
 
         if selected_suit is None:

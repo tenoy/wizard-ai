@@ -3,6 +3,7 @@ from collections import deque
 from random import sample
 from enum_rank import Rank
 from enum_suit import Suit
+from state import State
 from trick import Trick
 
 
@@ -12,20 +13,23 @@ class Simulation:
     @staticmethod
     def simulate_episode(state, horizont, is_rollout=False):
         players_game_order = state.players
-        deck = state.deck
+        deck = list(state.deck)
         number_of_rounds = state.round_nr + horizont
         for i in range(state.round_nr, number_of_rounds+1, 1):
             # create a new deque for 'in round order'
             players = deque(players_game_order)
-            # Sample cards from deck
+            # determine number of cards to sample from deck
             if i == number_of_rounds:
-                sampled_cards = sample(deck, i*len(players))
+                number_of_sampled_cards = i*len(players)
             else:
-                sampled_cards = sample(deck, i*len(players)+1)
+                # one additional card must be sampled for trump card
+                number_of_sampled_cards = i*len(players)+1
+            # Sample cards from deck
+            sampled_cards = sample(deck, number_of_sampled_cards)
+
             # Each player gets their share of sampled cards
             bids = {}
             start_idx = 0
-            # testing_card = 55
             for player in players:
                 player.current_hand = sampled_cards[start_idx:start_idx+i]
                 # player.current_hand = [deck[testing_card]]
@@ -35,19 +39,22 @@ class Simulation:
             # Sample trump suit (except in last round)
             trump_card = None
             trump_suit = None
+            state_suit = State(players, i, Trick(trump_suit=None, leading_suit=None, cards=[], played_by=[]), deck, [])
             if i < number_of_rounds:
                 trump_card = sampled_cards[len(sampled_cards)-1]
                 # trump_card = Card(Suit.JOKER, Rank.WIZARD) # for testing
                 trump_suit = trump_card.suit
                 if trump_suit == Suit.JOKER:
                     if trump_card.rank == Rank.WIZARD:
-                        trump_suit = players[0].pick_suit()
+                        trump_suit = players[0].pick_suit(state_suit)
                     else:
                         trump_suit = None
 
+            state_suit.trick.trump_suit = trump_suit
             # Place bids
+            state_bid = State(players, i, Trick(trump_suit=trump_suit, leading_suit=None, cards=[], played_by=[]), deck, [])
             for player in players:
-                player.current_bid = player.make_bid(i, bids, players, trump_suit)
+                player.current_bid = player.make_bid(state_bid)
                 bids[player] = player.current_bid
 
             # Each player plays a card one after another in each trick j of round i

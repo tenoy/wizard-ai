@@ -7,13 +7,13 @@ from policies.player_computer_weighted_random import PlayerComputerWeightedRando
 
 class PlayerComputerMyopic(PlayerComputerWeightedRandom):
 
-    def calculate_bid(self, round_nr=None, previous_bids=None, players=None, trump_suit=None):
+    def calculate_bid(self, state):
         bid = 0
         for card in self.current_hand:
             if card.rank == Rank.WIZARD:
                 bid = bid + 1
             else:
-                prob = card.calc_static_win_prob(current_hand=self.current_hand, trump_suit=trump_suit, players=players)
+                prob = card.calc_static_win_prob(current_hand=self.current_hand, trump_suit=state.trick.trump_suit, players=state.players)
                 if prob >= 0.5:
                     bid = bid + 1
         return bid

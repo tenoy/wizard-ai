@@ -1,12 +1,14 @@
 from abc import abstractmethod
 from collections import deque
-
 from enum_suit import Suit
 
 
 class Player:
-    def __init__(self, number, player_type):
-        self.number = number
+    number_player = 0
+
+    def __init__(self, player_type):
+        self.number = Player.number_player
+        Player.number_player = Player.number_player + 1
         # can be computer or human
         self.player_type = player_type
         self.current_hand = []

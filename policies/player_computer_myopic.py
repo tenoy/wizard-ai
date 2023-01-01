@@ -5,7 +5,7 @@ from enum_suit import Suit
 from policies.player_computer_weighted_random import PlayerComputerWeightedRandom
 
 
-class PlayerComputerHeuristic(PlayerComputerWeightedRandom):
+class PlayerComputerMyopic(PlayerComputerWeightedRandom):
 
     def calculate_bid(self, round_nr=None, previous_bids=None, players=None, trump_suit=None):
         bid = 0

@@ -8,8 +8,8 @@ from player import Player
 
 class PlayerComputer(Player):
 
-    def __init__(self, number, player_type, policy):
-        super(PlayerComputer, self).__init__(number, player_type)
+    def __init__(self, player_type, policy):
+        super(PlayerComputer, self).__init__(player_type)
         self.policy = policy
 
     def make_bid(self, round_nr, previous_bids, players, trump_suit):

@@ -11,26 +11,34 @@ class Simulation:
     winning_cards = {}
 
     @staticmethod
-    def simulate_episode(state, horizont, is_rollout=False):
+    def simulate_episode(state, horizont, rollout_player=None):
         players_game_order = state.players
-        deck = list(state.deck)
+        if rollout_player is None:
+            deck = list(state.deck)
+        else:
+            deck = [card for card in state.deck if card not in rollout_player.current_hand]
         number_of_rounds = state.round_nr + horizont
-        for i in range(state.round_nr, number_of_rounds+1, 1):
+        max_number_of_rounds = state.max_number_of_rounds
+        for i in range(state.round_nr, min(number_of_rounds+1, max_number_of_rounds), 1):
             # create a new deque for 'in round order'
             players = deque(players_game_order)
             # determine number of cards to sample from deck
-            if i == number_of_rounds:
+            if i == max_number_of_rounds:
                 number_of_sampled_cards = i*len(players)
             else:
                 # one additional card must be sampled for trump card
                 number_of_sampled_cards = i*len(players)+1
+            # reduce number of sampled card by the cards in hand of rollout player
+            if state.round_nr == i and rollout_player is not None:
+                number_of_sampled_cards = number_of_sampled_cards - len(rollout_player.current_hand)
             # Sample cards from deck
             sampled_cards = sample(deck, number_of_sampled_cards)
 
             # Each player gets their share of sampled cards
-            bids = {}
             start_idx = 0
             for player in players:
+                if state.round_nr == i and rollout_player == player:
+                    continue
                 player.current_hand = sampled_cards[start_idx:start_idx+i]
                 # player.current_hand = [deck[testing_card]]
                 start_idx = start_idx + i
@@ -39,23 +47,34 @@ class Simulation:
             # Sample trump suit (except in last round)
             trump_card = None
             trump_suit = None
-            state_suit = State(players, i, Trick(trump_suit=None, leading_suit=None, cards=[], played_by=[]), deck, [])
-            if i < number_of_rounds:
-                trump_card = sampled_cards[len(sampled_cards)-1]
-                # trump_card = Card(Suit.JOKER, Rank.WIZARD) # for testing
-                trump_suit = trump_card.suit
-                if trump_suit == Suit.JOKER:
-                    if trump_card.rank == Rank.WIZARD:
-                        trump_suit = players[0].pick_suit(state_suit)
-                    else:
-                        trump_suit = None
-
-            state_suit.trick.trump_suit = trump_suit
+            if i < max_number_of_rounds:
+                trump_card = sampled_cards[len(sampled_cards) - 1]
+                if state.round_nr == i and rollout_player is not None:
+                    trump_suit = state.trick.trump_suit
+                else:
+                    # trump_card = Card(Suit.JOKER, Rank.WIZARD) # for testing
+                    trump_suit = trump_card.suit
+                    if trump_suit == Suit.JOKER:
+                        if trump_card.rank == Rank.WIZARD:
+                            trump_suit = players[0].pick_suit(state)
+                        else:
+                            trump_suit = None
+            state.trick.trump_suit = trump_suit
             # Place bids
-            state_bid = State(players, i, Trick(trump_suit=trump_suit, leading_suit=None, cards=[], played_by=[]), deck, [])
+            bids = {}
+            state.bids = bids
             for player in players:
-                player.current_bid = player.make_bid(state_bid)
+                if state.round_nr == i and rollout_player == player:
+                    player.current_bid = rollout_player.current_bid
+                    # it might be that a valid bid in starting state is not valid in rollout state
+                    if not rollout_player.is_valid_bid(state, rollout_player.current_bid):
+                        player.current_bid = rollout_player.recalculate_bid(state, rollout_player.current_bid)
+                else:
+                    player.current_bid = player.make_bid(state)
                 bids[player] = player.current_bid
+                state.bids = bids
+
+
 
             # Each player plays a card one after another in each trick j of round i
             for j in range(0, i, 1):
@@ -101,12 +120,16 @@ class Simulation:
 
             # next round another player starts
             players_game_order.rotate(1)
+            if rollout_player is None:
+                state.round_nr = i + 1
             #print('Round ' + str(i) + ' done')
             #print('#############################################################')
         # evaluate winning player
         highest_score = -10000000000
         highest_score_player = None
+        player_scores = {}
         for player in players:
+            player_scores[player] = player.current_score
             if player.current_score > highest_score:
                 highest_score = player.current_score
                 highest_score_player = player
@@ -116,7 +139,12 @@ class Simulation:
                     highest_score = player.current_score
                     highest_score_player = player
             player.current_score = 0
+        if rollout_player is None:
+            highest_score_player.games_won = highest_score_player.games_won + 1
+            for player in state.players:
+                print(str(player) + ', Games won: ' + str(player.games_won))
 
-        highest_score_player.games_won = highest_score_player.games_won + 1
-        for player in state.players:
-            print(str(player) + ', Games won: ' + str(player.games_won))
+        if rollout_player is None:
+            return player_scores
+        else:
+            return player_scores[rollout_player]

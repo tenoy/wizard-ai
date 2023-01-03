@@ -8,14 +8,14 @@ from player import Player
 
 class PlayerComputer(Player):
 
-    def __init__(self, player_type, policy):
-        super(PlayerComputer, self).__init__(player_type)
+    def __init__(self, number, player_type, policy):
+        super(PlayerComputer, self).__init__(number, player_type)
         self.policy = policy
 
     def make_bid(self, state):
         bid = self.calculate_bid(state)
         state.bids
-        while not self.is_valid_bid(state, bid):
+        while not self.is_valid_bid(state=state, bid=bid):
             bid = self.recalculate_bid(state, bid)
 
         return bid
@@ -32,7 +32,7 @@ class PlayerComputer(Player):
         return selected_card
 
     def pick_suit(self, state):
-        selected_suit = self.select_suit()
+        selected_suit = self.select_suit(state)
 
         if selected_suit is None:
             raise Exception('No suit selected. A suit must be selected. Exiting.')
@@ -104,3 +104,9 @@ class PlayerComputer(Player):
             # case where no leading suit is in trick or leading suit is a joker card
             return max(legal_cards)
 
+
+    def __str__(self):
+        return 'Player_' + str(self.number) + ' ' + self.policy
+
+    def __repr__(self):
+        return 'Player_' + str(self.number) + ' ' + self.policy

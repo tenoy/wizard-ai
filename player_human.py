@@ -12,19 +12,20 @@ class PlayerHuman(Player):
             is_valid = False
         return is_valid
 
-    def make_bid(self):
+    def make_bid(self, state):
         bid = -1
-        print('Trump suit: ' + str(trump_suit))
+        print('Round: ' + str(state.round_nr))
+        print('Trump suit: ' + str(state.trick.trump_suit))
         print('Current hand:')
         print(*self.current_hand, sep=', ')
         print('Previous bids:', end=' ')
-        print(*previous_bids.items())
+        print(*state.bids.items())
         is_valid_input = False
         while not is_valid_input:
             human_input = input('Enter your bid: ')
             if self.is_input_valid(human_input):
                 int_human_input = int(human_input)
-                if self.is_valid_bid(int_human_input, round_nr, previous_bids, players):
+                if self.is_valid_bid(state, int_human_input):
                     bid = int_human_input
                     is_valid_input = True
                 else:
@@ -67,8 +68,9 @@ class PlayerHuman(Player):
                 is_valid_input = False
         return selected_card
 
-    def pick_suit(self):
+    def pick_suit(self, state):
         selected_suit = None
+        print('Round: ' + str(state.round_nr))
         print('You are the dealer and have drawn a WIZARD as the trump card. You may choose a suit.')
         self.print_current_hand()
         i = 1

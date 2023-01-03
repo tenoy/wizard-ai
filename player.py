@@ -4,11 +4,9 @@ from enum_suit import Suit
 
 
 class Player:
-    number_player = 0
 
-    def __init__(self, player_type):
-        self.number = Player.number_player
-        Player.number_player = Player.number_player + 1
+    def __init__(self, number, player_type):
+        self.number = number
         # can be computer or human
         self.player_type = player_type
         self.current_hand = []
@@ -54,7 +52,7 @@ class Player:
         elif selected_card.suit == Suit.JOKER:
             return True
         else:
-            if self.has_leading_suit_in_hand(self.current_hand, leading_suit):
+            if self.has_leading_suit_in_hand(leading_suit):
                 if selected_card.suit == leading_suit:
                     return True
                 else:

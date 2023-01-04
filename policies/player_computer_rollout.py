@@ -20,7 +20,6 @@ class PlayerComputerRollout(PlayerComputerMyopic):
             if state.players[i].player_type == 'human':
                 pos_humans.append(i)
 
-
         bid_avg_score_dict = {}
         #bid_stdev_score_dict = {}
         #bid_median_score_dict = {}
@@ -47,8 +46,8 @@ class PlayerComputerRollout(PlayerComputerMyopic):
             bid_avg_score_dict[bid] = statistics.mean(bid_scores)
             #bid_stdev_score_dict[bid] = statistics.stdev(bid_scores)
             #bid_median_score_dict[bid] = statistics.median(bid_scores)
-        bid = max(bid_avg_score_dict, key=bid_avg_score_dict.get)
-        return bid
+        max_avg_bid = max(bid_avg_score_dict, key=bid_avg_score_dict.get)
+        return max_avg_bid
 
     @staticmethod
     def substitute_player(player, substitute):

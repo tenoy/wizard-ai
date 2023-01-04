@@ -16,7 +16,6 @@ class State:
             self.players.append(player_copy)
 
         self.round_nr = round_nr
-        self.max_number_of_rounds = int(60 / len(players))
         self.trick = Trick(trump_suit=trick.trump_suit, leading_suit=trick.leading_suit, cards=list(trick.cards), played_by=list(trick.played_by))
         self.deck = list(deck)
         self.bids = dict(bids)

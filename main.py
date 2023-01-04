@@ -55,10 +55,10 @@ players_initial_order.append(PlayerHuman(7, 'human'))
 
 timestamp_start = datetime.datetime.now()
 
-s0 = State(players_initial_order, 1, Trick(), deck, {})
 winning_cards = {}
 number_of_rounds = int(60 / len(players_initial_order)) - 1
 for i in range(0, 1000):
+    s0 = State(players_initial_order, 1, Trick(), deck, {})
     Simulation.simulate_episode(s0, number_of_rounds)
 timestamp_end = datetime.datetime.now()
 delta = timestamp_end - timestamp_start

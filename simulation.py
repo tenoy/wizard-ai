@@ -13,13 +13,16 @@ class Simulation:
     @staticmethod
     def simulate_episode(state, horizont, rollout_player=None):
         players_game_order = state.players
+        max_number_of_rounds = int(60 / len(players_game_order))
+
         if rollout_player is None:
             deck = list(state.deck)
+            number_of_rounds = max_number_of_rounds
         else:
             deck = [card for card in state.deck if card not in rollout_player.current_hand]
-        number_of_rounds = state.round_nr + horizont
-        max_number_of_rounds = state.max_number_of_rounds
-        for i in range(state.round_nr, min(number_of_rounds+1, max_number_of_rounds), 1):
+            number_of_rounds = state.round_nr
+
+        for i in range(state.round_nr, min(number_of_rounds+1, max_number_of_rounds+1), 1):
             # create a new deque for 'in round order'
             players = deque(players_game_order)
             # determine number of cards to sample from deck
@@ -102,7 +105,7 @@ class Simulation:
                         print('Cards in trick: ', end=' ')
                         print(*trick.cards, sep=', ')
                         print('Winning card: ' + str(highest_card) + ' from Player ' + str(winning_player.number))
-                        print('#############################################################')
+                        print('==============================================================')
                 players.rotate(rotate_by)
 
             # Calc score for each player and reset player hands etc
@@ -122,14 +125,15 @@ class Simulation:
             players_game_order.rotate(1)
             if rollout_player is None:
                 state.round_nr = i + 1
-            #print('Round ' + str(i) + ' done')
-            #print('#############################################################')
+                if 'human' in [player.player_type for player in players]:
+                    print('Round ' + str(i) + ' done')
+                    print('#############################################################')
         # evaluate winning player
         highest_score = -10000000000
         highest_score_player = None
-        player_scores = {}
+        player_final_scores = {}
         for player in players:
-            player_scores[player] = player.current_score
+            player_final_scores[player] = player.current_score
             if player.current_score > highest_score:
                 highest_score = player.current_score
                 highest_score_player = player
@@ -145,6 +149,6 @@ class Simulation:
                 print(str(player) + ', Games won: ' + str(player.games_won))
 
         if rollout_player is None:
-            return player_scores
+            return player_final_scores
         else:
-            return player_scores[rollout_player]
+            return player_final_scores[rollout_player]

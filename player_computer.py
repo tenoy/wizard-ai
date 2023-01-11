@@ -1,6 +1,4 @@
-import random
 from abc import abstractmethod
-
 from enum_rank import Rank
 from enum_suit import Suit
 from player import Player

@@ -1,17 +1,18 @@
 import random
+import threading
 from collections import deque
 from random import sample
 from enum_rank import Rank
 from enum_suit import Suit
-from state import State
 from trick import Trick
 
 
-class Simulation:
+class Simulation(threading.Thread):
     winning_cards = {}
+    q = None
 
     @staticmethod
-    def simulate_episode(state, horizont, rollout_player=None):
+    def simulate_episode(state, rollout_player=None, human_player=None):
         players_game_order = state.players
         max_number_of_rounds = int(60 / len(players_game_order))
 
@@ -47,6 +48,10 @@ class Simulation:
                 start_idx = start_idx + i
                 # testing_card = testing_card + 1
 
+            if human_player is not None:
+                Simulation.q.put('UPDATE_HAND')
+                Simulation.q.join()
+
             # Sample trump suit (except in last round)
             trump_card = None
             trump_suit = None
@@ -63,6 +68,11 @@ class Simulation:
                         else:
                             trump_suit = None
             state.trick.trump_suit = trump_suit
+
+            if human_player is not None:
+                Simulation.q.put('UPDATE_TRUMP')
+                Simulation.q.join()
+
             # Place bids
             bids = {}
             state.bids = bids
@@ -77,11 +87,13 @@ class Simulation:
                 bids[player] = player.current_bid
                 state.bids = bids
 
-
+            if human_player is not None:
+                Simulation.q.put('UPDATE_BIDS')
+                Simulation.q.join()
 
             # Each player plays a card one after another in each trick j of round i
             for j in range(0, i, 1):
-                trick = Trick(trump_suit=trump_suit, leading_suit=None, cards=[], played_by=[])
+                trick = Trick(trump_suit=trump_suit, leading_suit=None, cards=[], played_by=[], trick_nr=j)
                 for player in players:
                     played_card = player.play(trick, bids)
                     trick.add_card(played_card, player)
@@ -128,6 +140,10 @@ class Simulation:
                 if 'human' in [player.player_type for player in players]:
                     print('Round ' + str(i) + ' done')
                     print('#############################################################')
+            if human_player is not None:
+                Simulation.q.put('UPDATE_TRICK')
+                Simulation.q.join()
+
         # evaluate winning player
         highest_score = -10000000000
         highest_score_player = None

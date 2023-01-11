@@ -1,8 +1,15 @@
+import sys
+import threading
+from tkinter import Tk, Button
+
 from enum_suit import Suit
 from player import Player
 
 
-class PlayerHuman(Player):
+class PlayerHuman(Player, threading.Thread):
+
+    def __init__(self, number, player_type):
+        super(PlayerHuman, self).__init__(number, player_type)
 
     def is_input_valid(self, input_value):
         try:

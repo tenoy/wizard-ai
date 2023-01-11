@@ -42,7 +42,7 @@ class PlayerComputerRollout(PlayerComputerMyopic):
                 del state_rollout.players[pos_rollout_player]
                 state_rollout.players.insert(pos_rollout_player, base_policy_player)
                 # Simulate
-                bid_scores.append(Simulation.simulate_episode(state_rollout, 0, base_policy_player))
+                bid_scores.append(Simulation.simulate_episode(state_rollout, base_policy_player))
             bid_avg_score_dict[bid] = statistics.mean(bid_scores)
             #bid_stdev_score_dict[bid] = statistics.stdev(bid_scores)
             #bid_median_score_dict[bid] = statistics.median(bid_scores)

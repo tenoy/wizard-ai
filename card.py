@@ -1,19 +1,38 @@
 from math import comb
 
+from PIL import Image, ImageTk
+
 from enum_rank import Rank
 from enum_suit import Suit
 
 
 class Card:
 
-    def __init__(self, suit, rank, instance_number=0):
+    def __init__(self, suit, rank, instance_number=0, is_game_mode=False):
         self.suit = suit
         self.rank = rank
-        # wizard and jester exist 4 times, to distinguish them an instance number from 1 to 4 is used
-        # all other cards exit only 1 time and have instance number 0
+        # wizard and jester exist 4 times, to distinguish each instance a number from 1 to 4 is given
+        # all other cards exit only one time and have instance number of 0
         self.instance_number = instance_number
         # self.win_prob = self.calc_static_win_prob('normal')
         # self.win_prob_trump = self.calc_static_win_prob('trump')
+        # load a card image if program is started in game mode
+        if is_game_mode:
+            # call image reading and resizing method
+            self.card_image = self.load_card_image()
+        else:
+            self.card_image = None
+
+    def load_card_image(self):
+        if self.suit != Suit.JOKER:
+            suit_lowercase = str(self.suit).lower()
+            image_original = Image.open(f'gui/cards/{self.rank.value}_of_{suit_lowercase}.png')
+        else:
+            rank_lowercase = str(self.rank).lower()
+            image_original = Image.open(f'gui/cards/{rank_lowercase}.png')
+        card_image = image_original.resize((100, 145))
+        # card_image = ImageTk.PhotoImage(image_resize)
+        return card_image
 
     # use only to compare cards of same suit!
     def __gt__(self, other):

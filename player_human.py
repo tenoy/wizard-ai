@@ -1,5 +1,7 @@
+import queue
 import sys
 import threading
+import time
 from tkinter import Tk, Button
 
 from enum_suit import Suit
@@ -8,10 +10,14 @@ from player import Player
 
 class PlayerHuman(Player, threading.Thread):
 
-    def __init__(self, number, player_type):
-        super(PlayerHuman, self).__init__(number, player_type)
+    q = None
 
-    def is_input_valid(self, input_value):
+    def __init__(self, number, player_type, q):
+        super(PlayerHuman, self).__init__(number, player_type)
+        PlayerHuman.q = q
+
+    @staticmethod
+    def is_input_valid(input_value):
         try:
             int(input_value)
             is_valid = True
@@ -31,18 +37,61 @@ class PlayerHuman(Player, threading.Thread):
         print(*state.bids.items())
         is_valid_input = False
         while not is_valid_input:
-            human_input = input('Enter your bid: ')
-            if self.is_input_valid(human_input):
-                int_human_input = int(human_input)
-                if self.is_valid_bid(state, int_human_input):
-                    bid = int_human_input
-                    is_valid_input = True
-                else:
-                    print('Invalid bid. The sum of bids is not allowed to equal the round number')
-                    is_valid_input = False
-            else:
-                print('Invalid input. Input must be a positive number.')
-                is_valid_input = False
+            print(f'human:  {PlayerHuman.q.queue}')
+            print('human: loop')
+            print('human: putting ENTER_BID')
+            PlayerHuman.q.put('ENTER_BID')
+            print(f'human:  {PlayerHuman.q.queue}')
+            print('human: waiting for all tasks done')
+            PlayerHuman.q.join()
+            print('human: q joined')
+            try:
+                msg = PlayerHuman.q.get(block=True)
+                print(f'human: task done')
+                PlayerHuman.q.task_done()
+                if msg == 'INPUT_BID':
+                    print('human: got INPUT_BID')
+                    human_input = PlayerHuman.q.get(block=True)
+                    print(f'human: got {human_input}')
+                    if self.is_input_valid(human_input):
+                        int_human_input = int(human_input)
+                        if self.is_valid_bid(state, int_human_input):
+                            bid = int_human_input
+                            is_valid_input = True
+                            print(f'human: task done')
+                            print(f'human:  {PlayerHuman.q.queue}')
+                            PlayerHuman.q.task_done()
+                        else:
+                            print('Invalid bid. The sum of bids is not allowed to equal the round number')
+                            is_valid_input = False
+                            print(f'human: task done')
+                            print(f'human:  {PlayerHuman.q.queue}')
+                            PlayerHuman.q.task_done()
+                    else:
+                        print('Invalid input. Input must be a positive number.')
+                        is_valid_input = False
+                        print(f'human: task done')
+                        print(f'human:  {PlayerHuman.q.queue}')
+                        PlayerHuman.q.task_done()
+            except queue.Empty:
+                print('human: sleep')
+                time.sleep(0.05)
+
+
+
+        # while not is_valid_input:
+        #     human_input = input('Enter your bid: ')
+        #     if self.is_input_valid(human_input):
+        #         int_human_input = int(human_input)
+        #         if self.is_valid_bid(state, int_human_input):
+        #             bid = int_human_input
+        #             is_valid_input = True
+        #         else:
+        #             print('Invalid bid. The sum of bids is not allowed to equal the round number')
+        #             is_valid_input = False
+        #     else:
+        #         print('Invalid input. Input must be a positive number.')
+        #         is_valid_input = False
 
         return bid
 

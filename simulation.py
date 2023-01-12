@@ -49,7 +49,15 @@ class Simulation(threading.Thread):
                 # testing_card = testing_card + 1
 
             if human_player is not None:
+                Simulation.q.put('UPDATE_ROUND')
+                Simulation.q.join()
+                Simulation.q.put('UPDATE_STATS')
+                Simulation.q.join()
                 Simulation.q.put('UPDATE_HAND')
+                Simulation.q.join()
+                # Simulation.q.put('UPDATE_TRUMP')
+                # Simulation.q.join()
+                Simulation.q.put('UPDATE_TRICK')
                 Simulation.q.join()
 
             # Sample trump suit (except in last round)
@@ -63,6 +71,7 @@ class Simulation(threading.Thread):
                     # trump_card = Card(Suit.JOKER, Rank.WIZARD) # for testing
                     trump_suit = trump_card.suit
                     if trump_suit == Suit.JOKER:
+                        # if the dealer (i.e. player[0]) pulls a wizards as trump card, he might choose a trump suit
                         if trump_card.rank == Rank.WIZARD:
                             trump_suit = players[0].pick_suit(state)
                         else:
@@ -86,19 +95,30 @@ class Simulation(threading.Thread):
                     player.current_bid = player.make_bid(state)
                 bids[player] = player.current_bid
                 state.bids = bids
-
-            if human_player is not None:
-                Simulation.q.put('UPDATE_BIDS')
-                Simulation.q.join()
+                if human_player is not None:
+                    Simulation.q.put('UPDATE_STATS')
+                    Simulation.q.join()
 
             # Each player plays a card one after another in each trick j of round i
             for j in range(0, i, 1):
                 trick = Trick(trump_suit=trump_suit, leading_suit=None, cards=[], played_by=[], trick_nr=j)
+                state.trick = trick
+                if human_player is not None:
+                    Simulation.q.put('UPDATE_TRICK')
+                    Simulation.q.join()
+                    Simulation.q.put('UPDATE_STATS')
+                    Simulation.q.join()
                 for player in players:
                     played_card = player.play(trick, bids)
                     trick.add_card(played_card, player)
                     if trick.leading_suit is None:
                         trick.leading_suit = trick.get_leading_suit()
+                    state.trick = trick
+                    if human_player is not None:
+                        Simulation.q.put('UPDATE_TRICK')
+                        Simulation.q.join()
+                        Simulation.q.put('UPDATE_STATS')
+                        Simulation.q.join()
                 highest_card = trick.get_highest_trick_card()
                 win_count_card = Simulation.winning_cards.setdefault(highest_card, 0)
                 Simulation.winning_cards[highest_card] = win_count_card + 1
@@ -116,9 +136,21 @@ class Simulation(threading.Thread):
                         print('Trump suit: ' + str(trump_suit))
                         print('Cards in trick: ', end=' ')
                         print(*trick.cards, sep=', ')
-                        print('Winning card: ' + str(highest_card) + ' from Player ' + str(winning_player.number))
+                        print('Winning card: ' + str(highest_card) + ' from ' + str(winning_player))
                         print('==============================================================')
+                if human_player is not None:
+                    Simulation.q.put('UPDATE_HAND')
+                    Simulation.q.join()
+                    Simulation.q.put('UPDATE_STATS')
+                    Simulation.q.join()
+                    Simulation.q.put('UPDATE_TRICK_WINNER')
+                    Simulation.q.join()
                 players.rotate(rotate_by)
+                state.players = players
+                if human_player is not None:
+                    print(*players)
+                    print(*state.players)
+
 
             # Calc score for each player and reset player hands etc
             for player in players_game_order:
@@ -135,12 +167,14 @@ class Simulation(threading.Thread):
 
             # next round another player starts
             players_game_order.rotate(1)
+            state.players = players_game_order
             if rollout_player is None:
                 state.round_nr = i + 1
                 if 'human' in [player.player_type for player in players]:
                     print('Round ' + str(i) + ' done')
                     print('#############################################################')
             if human_player is not None:
+                state.trick = Trick(trump_suit=trump_suit, leading_suit=None, cards=[], played_by=[])
                 Simulation.q.put('UPDATE_TRICK')
                 Simulation.q.join()
 

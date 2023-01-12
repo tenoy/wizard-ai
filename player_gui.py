@@ -1,12 +1,17 @@
 import sys
 import textwrap
-from tkinter import Tk, ttk
-from PIL import ImageTk
+from tkinter import Tk, ttk, messagebox, simpledialog
+from PIL import Image, ImageTk
 
+# list/variable must be global due to bug in ImageTk
+card_images_hand = {}
+card_image_trump = None
+card_images_trick = []
 
 class PlayerGui:
 
     def __init__(self, master, initial_state, human_player):
+        print('###__init__###')
         # self.initial_state = initial_state
         # self.human_player = human_player
         # gui stuff
@@ -20,102 +25,159 @@ class PlayerGui:
 
         self.mainframe = ttk.Frame(master, padding="3 3 12 12")
         self.mainframe.grid(column=0, row=0)
-        self.hand_group = None
-        self.card_label = None
 
-        round_label = ttk.Label(self.mainframe, text=f'Round {initial_state.round_nr}')
-        round_label.grid(row=0, column=0)
+        self.round_label = ttk.Label(self.mainframe, text=f'Round {initial_state.round_nr}')
+        self.round_label.grid(row=0, column=0)
 
-        bids_group = ttk.LabelFrame(self.mainframe, text="Bids")
-        bids_group.grid(padx=self.pad_x, pady=self.pad_y, row=1, column=0, sticky='N S')
+        self.stats_group = ttk.LabelFrame(self.mainframe, text="Player Stats")
+        self.stats_group.grid(padx=self.pad_x, pady=self.pad_y, row=1, column=0, sticky='N S')
 
-        player_name_label = ttk.Label(bids_group, text='Playername')
+        player_name_label = ttk.Label(self.stats_group, text='Playername')
         player_name_label.grid(row=0, column=0, sticky='W', pady=self.pad_y)
-        player_bid_label = ttk.Label(bids_group, text='Bid')
+        player_bid_label = ttk.Label(self.stats_group, text='Bid')
         player_bid_label.grid(row=0, column=1, sticky='E', pady=self.pad_y)
+        player_tricks_won_label = ttk.Label(self.stats_group, text='Tricks Won')
+        player_tricks_won_label.grid(row=0, column=2, sticky='E', pady=self.pad_y)
+        player_score_label = ttk.Label(self.stats_group, text='Score')
+        player_score_label.grid(row=0, column=3, sticky='E', pady=self.pad_y)
 
+        self.player_name_labels = []
+        self.player_bid_labels = []
+        self.player_tricks_won_labels = []
+        self.player_score_labels = []
         for i in range(len(initial_state.players)):
             player = initial_state.players[i]
-            player_name_label = ttk.Label(bids_group, text=f'{player}')
+            player_name_label = ttk.Label(self.stats_group, text=f'{player}')
             player_name_label.grid(row=i + 1, column=0, sticky='W')
-            player_bid_label = ttk.Label(bids_group, text=f'{player.current_bid}')
+            self.player_name_labels.append(player_name_label)
+            if player.current_bid == -1:
+                player_bid_formatted = '-'
+            else:
+                player_bid_formatted = str(player.current_bid)
+            player_bid_label = ttk.Label(self.stats_group, text=f'{player_bid_formatted}')
             player_bid_label.grid(row=i + 1, column=1)
+            self.player_bid_labels.append(player_bid_label)
+            player_tricks_won_label = ttk.Label(self.stats_group, text=f'{player.current_tricks_won}')
+            player_tricks_won_label.grid(row=i + 1, column=2)
+            self.player_tricks_won_labels.append(player_tricks_won_label)
+            player_score_label = ttk.Label(self.stats_group, text=f'{player.current_score}')
+            player_score_label.grid(row=i + 1, column=3)
+            self.player_score_labels.append(player_score_label)
 
-        trick_group = ttk.LabelFrame(self.mainframe, text='Trick Cards')
-        trick_group.grid(padx=self.pad_x, pady=self.pad_y, row=1, column=1)
+        self.trump_group = ttk.LabelFrame(self.mainframe, text="Trump Card", width=100)
+        self.trump_group.grid(padx=self.pad_x, pady=self.pad_y, row=1, column=1, sticky='N S')
 
-        # s0.trick = Trick(trump_suit=Suit.DIAMONDS,
-        #                  cards=[deck[53], deck[56], deck[11], deck[12], deck[13], deck[14]],
-        #                  played_by=[players_initial_order[0], players_initial_order[1], players_initial_order[2], players_initial_order[3], players_initial_order[4], players_initial_order[5]]
-        #                  )
+        self.trick_group = ttk.LabelFrame(self.mainframe, text='Trick Cards', width=200)
+        self.trick_group.grid(padx=self.pad_x, pady=self.pad_y, row=1, column=2, sticky='N S')
 
-        # due to bug in ImageTk.PhotoImage, the variable name passed as an argument to the image parameter of Label must be different
-        card_images_trick = []
-        for card in initial_state.trick.cards:
-            card_images_trick.append(ImageTk.PhotoImage(card.card_image))
-
-        for i in range(len(initial_state.trick.cards)):
-            played_by = initial_state.trick.played_by[i]
-            player_name_short = textwrap.shorten(str(played_by), width=11, placeholder="...")
-            card_frame = ttk.LabelFrame(trick_group, text=f'{player_name_short}', width=110)
-            card_frame.grid(row=0, column=i)
-            card_label = ttk.Label(card_frame, text='', image=card_images_trick[i])  # get image of card
-            card_label.grid(row=0, column=i)
-            # break
-        # card_label.config(image=ImageTk.PhotoImage(card.card_image))
-
-        # self.hand_group = ttk.LabelFrame(self.mainframe, text=f'Current hand {human_player}')
-        # self.hand_group.grid(padx=self.pad_x, pady=self.pad_y, row=2, column=0, columnspan=2)
-        #
-        # card_images_hand = []
-        # for card in human_player.current_hand:
-        #     card_images_hand.append(ImageTk.PhotoImage(card.card_image))
-        #
-        # max_cards_per_row = 7
-        # current_row = 0
-        # current_col = 0
-        # for i in range(len(human_player.current_hand)):
-        #     if current_col >= max_cards_per_row:
-        #         current_row = current_row + 1
-        #         current_col = 0
-        #     self.card_label = ttk.Label(self.hand_group, text='', image=card_images_hand[i])  # get image of card
-        #     self.card_label.grid(row=current_row, column=current_col)
-        #     current_col = current_col + 1
-
-        # Thread mit funktion für polling des queues von player_human aufmachen
-        # Gui entsprechend der Nachrichten in der Queue anpassen
-
-        # start_btn = Button(root, text="Start", command=lambda: Simulation.simulate_episode(s0, number_of_rounds))
-        # start_btn.grid(row=0, column=0, padx=10, pady=10)
+        self.hand_group = ttk.LabelFrame(self.mainframe, text=f'Current hand {human_player}')
+        self.hand_group.grid(padx=self.pad_x, pady=self.pad_y, row=2, column=0, columnspan=3)
 
         master.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def update_hand(self, state):
+        # print('###update hand###')
         human_player = self.get_human_player(state)
-        self.hand_group = ttk.LabelFrame(self.mainframe, text=f'Current hand {human_player}')
-        self.hand_group.grid(padx=self.pad_x, pady=self.pad_y, row=2, column=0, columnspan=2)
-        card_images_hand = []
+        if len(human_player.played_cards) == 0:
+            card_images_hand.clear()
+        else:
+            for card in human_player.played_cards:
+                print(f'delete card: {card}')
+                if card_images_hand.get(card) is not None:
+                    del card_images_hand[card]
+
+        # self.hand_group = ttk.LabelFrame(self.mainframe, text=f'Current hand {human_player}')
+        # self.hand_group.grid(padx=self.pad_x, pady=self.pad_y, row=2, column=0, columnspan=2)
+        # card_images_hand = []
         for card in human_player.current_hand:
-            card_images_hand.append(ImageTk.PhotoImage(card.card_image))
+            card_images_hand[card] = ImageTk.PhotoImage(card.card_image)
+
         max_cards_per_row = 7
         current_row = 0
         current_col = 0
         for i in range(len(human_player.current_hand)):
+            card = human_player.current_hand[i]
             if current_col >= max_cards_per_row:
                 current_row = current_row + 1
                 current_col = 0
-            self.card_label = ttk.Label(self.hand_group, text='', image=card_images_hand[i])  # get image of card
-            self.card_label.grid(row=current_row, column=current_col)
+            card_label = ttk.Label(self.hand_group, text='', image=card_images_hand[card])  # get image of card
+            card_label.grid(row=current_row, column=current_col)
             current_col = current_col + 1
 
-    def update_trump(self):
-        pass
+    def update_trump(self, state):
+        # print('###update trump###')
+        if state.trick.trump_suit is None:
+            suit_image_original = Image.open(f'gui/cards/jester.png')
+        else:
+            suit_image_original = Image.open(f'gui/cards/{state.trick.trump_suit}.png')
+        suit_image = suit_image_original.resize((100, 145))
+        global card_image_trump
+        card_image_trump = ImageTk.PhotoImage(suit_image)
+        card_label = ttk.Label(self.trump_group, text='', image=card_image_trump)  # get image of card
+        card_label.grid(row=0, column=0)
 
-    def update_bids(self):
-        pass
+    def update_stats(self, state):
+        # print('###update stats###')
+        for i in range(len(state.players)):
+            player = state.players[i]
+            # player_name_label = ttk.Label(self.stats_group, text=f'{player}')
+            # player_name_label.grid(row=i + 1, column=0, sticky='W')
+            self.player_name_labels[i].configure(text=f'{player}')
+            if player.current_bid == -1:
+                player_bid_formatted = '-'
+            else:
+                player_bid_formatted = str(player.current_bid)
+            # player_bid_label = ttk.Label(self.stats_group, text=f'{player_bid_formatted}')
+            # player_bid_label.grid(row=i + 1, column=1)
+            self.player_bid_labels[i].configure(text=f'{player_bid_formatted}')
+            # player_tricks_won_label = ttk.Label(self.stats_group, text=f'{player.current_tricks_won}')
+            # player_tricks_won_label.grid(row=i + 1, column=2)
+            self.player_tricks_won_labels[i].configure(text=f'{player.current_tricks_won}')
+            # player_score_label = ttk.Label(self.stats_group, text=f'{player.current_score}')
+            # player_score_label.grid(row=i + 1, column=3)
+            self.player_score_labels[i].configure(text=f'{player.current_score}')
 
-    def update_trick(self):
-        pass
+    def update_trick(self, state):
+        # print('###update trick###')
+        for widgets in self.trick_group.winfo_children():
+            widgets.destroy()
+
+        card_images_trick.clear()
+        # if len(state.trick.cards) == 0:
+        #     card_images_trick.clear()
+
+        for card in state.trick.cards:
+            card_images_trick.append(ImageTk.PhotoImage(card.card_image))
+
+        for i in range(len(state.trick.cards)):
+            played_by = state.trick.played_by[i]
+            player_name_short = textwrap.shorten(str(played_by), width=11, placeholder="...")
+            card_frame = ttk.LabelFrame(self.trick_group, text=f'{player_name_short}', width=110)
+            card_frame.grid(row=0, column=i, sticky='N S')
+            card_label = ttk.Label(card_frame, text='', image=card_images_trick[i])  # get image of card
+            card_label.grid(row=0, column=i)
+
+        # # card_label.config(image=ImageTk.PhotoImage(card.card_image))
+
+    def update_round(self, state):
+        self.round_label.configure(text=f'Round {state.round_nr}')
+
+    @staticmethod
+    def update_trick_winner(state):
+        winning_card = state.trick.get_highest_trick_card()
+        winning_card_idx = state.trick.cards.index(winning_card)
+        winning_player = state.trick.played_by[winning_card_idx]
+        messagebox.showinfo(message=f'Winning card: {winning_card} from {winning_player}')
+
+    @staticmethod
+    def enter_bid():
+        new_win = Tk()
+        new_win.withdraw()
+        # print('###enter_bid###')
+        input_val = simpledialog.askinteger(title='Input', prompt='Enter your bid', parent=new_win)
+        # print(f'Input value: {input_val}')
+        new_win.destroy()
+        return input_val
 
     @staticmethod
     def get_human_player(state):

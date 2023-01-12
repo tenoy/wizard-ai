@@ -43,7 +43,7 @@ class PlayerComputerMyopic(PlayerComputerWeightedRandom):
             probs_dict[card] = prob
         return probs_dict
 
-    def select_suit(self):
+    def select_suit(self, state):
         suit_rank_sum_dict = {}
         for card in self.current_hand:
             if card.suit != Suit.JOKER:

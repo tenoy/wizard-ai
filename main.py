@@ -54,62 +54,55 @@ import datetime
 #         current_col = current_col + 1
 
 
-def process_simulation_event_queue(q):
+def process_simulation_event_queue():
     while True:
         # time.sleep(0.05)
         try:
-            print(f'poll:  {q.queue}')
-            msg = q.get(block=True)
+            # print(f'poll: call get {input_q.queue}')
+            msg = input_q.get(block=True, timeout=1)
             if msg == "UPDATE_HAND":
                 gui.update_hand(s0)
                 #update_hand()
-                q.task_done()
+                input_q.task_done()
             elif msg == "UPDATE_TRUMP":
                 # print('update trump')
                 gui.update_trump(s0)
-                q.task_done()
+                input_q.task_done()
             elif msg == "UPDATE_STATS":
                 # print('update stats')
                 gui.update_stats(s0)
-                q.task_done()
+                input_q.task_done()
             elif msg == "UPDATE_TRICK":
                 # print('update trick')
                 gui.update_trick(s0)
-                q.task_done()
+                input_q.task_done()
             elif msg == "UPDATE_ROUND":
                 # print('update round')
                 gui.update_round(s0)
-                q.task_done()
+                input_q.task_done()
             elif msg == "UPDATE_TRICK_WINNER":
                 # print('update trick winner')
                 gui.update_trick_winner(s0)
-                q.task_done()
+                input_q.task_done()
             elif msg == "ENTER_BID":
                 print('poll: call enter bid gui')
                 bid = gui.enter_bid()
                 # bid = root.after(0, gui.enter_bid)
                 print(f'poll: bid value: {bid}')
-                print(f'poll: task done')
-                print(f'poll:  {q.queue}')
-                q.task_done()
+                # print(f'poll: call task done')
+                # print(f'poll:  {q.queue}')
+                input_q.task_done()
                 print('poll: putting INPUT_BID')
-                q.put('INPUT_BID')
-                print(f'poll:  {q.queue}')
-                print('poll: waiting for all tasks done')
-                q.join()
-                print('poll: q joined')
-                print('poll: putting bid')
-                print(f'poll:  {q.queue}')
-                q.put(bid)
-                print(f'poll:  {q.queue}')
-                # print(q.queue)
-                # print('poll: waiting for all tasks done')
-                # q.join()
-                # print('poll: q joined')
-                # q.task_done()
-                # print(q.queue)
+                input_bid = ('INPUT_BID', bid)
+                output_q.put(input_bid)
+                print(f'poll:  {input_q.queue}')
+                # print('poll: call join')
+                output_q.join()
+            elif msg == "GAME_OVER":
+                gui.game_over()
+                input_q.task_done()
         except queue.Empty:
-            print('poll: sleep')
+            # print(f'poll: empty {input_q.queue}')
             time.sleep(0.05)
 
 
@@ -159,11 +152,14 @@ if program_mode == 'simulation':
     print(f"Time difference is {delta.total_seconds()} seconds")
     print('done')
 else:
-    # Queue für Nachrichtenaustausch zwischen main, simulation, player_gui und player_human
-    q = queue.Queue()
-    Simulation.q = q
+    # Queues für Duplex Nachrichtenaustausch zwischen main, simulation, player_gui und player_human
+    input_q = queue.Queue()
+    output_q = queue.Queue()
+    # input_q = alle nachrichten zum Simulation Poll Thread, ouput_q = alle nachrichten aus Simulation Poll Thread
+    Simulation.input_q = input_q
+    Simulation.output_q = output_q
     # setup human player
-    human_player = PlayerHuman(6, 'human', q=q)
+    human_player = PlayerHuman(6, 'human', input_q=input_q, output_q=output_q)
     # setup players
     players_initial_order = deque()
     players_initial_order.append(PlayerComputerRandom(1, 'computer', "random"))
@@ -179,7 +175,7 @@ else:
     root = Tk()
     gui = PlayerGui(root, s0, human_player)
     # start simulation poll thread that distributes messages between simulation, human_player and gui
-    threading.Thread(target=lambda: process_simulation_event_queue(q), name="Simulation Poll Thread").start()
+    threading.Thread(target=lambda: process_simulation_event_queue(), name="Simulation Poll Thread").start()
     # start simulation thread
     threading.Thread(target=lambda: Simulation.simulate_episode(s0, human_player=human_player), name="Simulation Thread").start()
     # start gui in main thread

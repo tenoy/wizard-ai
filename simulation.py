@@ -9,7 +9,8 @@ from trick import Trick
 
 class Simulation(threading.Thread):
     winning_cards = {}
-    q = None
+    input_q = None
+    output_q = None
 
     @staticmethod
     def simulate_episode(state, rollout_player=None, human_player=None):
@@ -49,16 +50,16 @@ class Simulation(threading.Thread):
                 # testing_card = testing_card + 1
 
             if human_player is not None:
-                Simulation.q.put('UPDATE_ROUND')
-                Simulation.q.join()
-                Simulation.q.put('UPDATE_STATS')
-                Simulation.q.join()
-                Simulation.q.put('UPDATE_HAND')
-                Simulation.q.join()
+                Simulation.input_q.put('UPDATE_ROUND')
+                Simulation.input_q.join()
+                Simulation.input_q.put('UPDATE_STATS')
+                Simulation.input_q.join()
+                Simulation.input_q.put('UPDATE_HAND')
+                Simulation.input_q.join()
                 # Simulation.q.put('UPDATE_TRUMP')
                 # Simulation.q.join()
-                Simulation.q.put('UPDATE_TRICK')
-                Simulation.q.join()
+                Simulation.input_q.put('UPDATE_TRICK')
+                Simulation.input_q.join()
 
             # Sample trump suit (except in last round)
             trump_card = None
@@ -79,8 +80,8 @@ class Simulation(threading.Thread):
             state.trick.trump_suit = trump_suit
 
             if human_player is not None:
-                Simulation.q.put('UPDATE_TRUMP')
-                Simulation.q.join()
+                Simulation.input_q.put('UPDATE_TRUMP')
+                Simulation.input_q.join()
 
             # Place bids
             bids = {}
@@ -96,18 +97,19 @@ class Simulation(threading.Thread):
                 bids[player] = player.current_bid
                 state.bids = bids
                 if human_player is not None:
-                    Simulation.q.put('UPDATE_STATS')
-                    Simulation.q.join()
+                    Simulation.input_q.put('UPDATE_STATS')
+                    print('simulation: waiting')
+                    Simulation.input_q.join()
 
             # Each player plays a card one after another in each trick j of round i
             for j in range(0, i, 1):
                 trick = Trick(trump_suit=trump_suit, leading_suit=None, cards=[], played_by=[], trick_nr=j)
                 state.trick = trick
                 if human_player is not None:
-                    Simulation.q.put('UPDATE_TRICK')
-                    Simulation.q.join()
-                    Simulation.q.put('UPDATE_STATS')
-                    Simulation.q.join()
+                    Simulation.input_q.put('UPDATE_TRICK')
+                    Simulation.input_q.join()
+                    Simulation.input_q.put('UPDATE_STATS')
+                    Simulation.input_q.join()
                 for player in players:
                     played_card = player.play(trick, bids)
                     trick.add_card(played_card, player)
@@ -115,10 +117,10 @@ class Simulation(threading.Thread):
                         trick.leading_suit = trick.get_leading_suit()
                     state.trick = trick
                     if human_player is not None:
-                        Simulation.q.put('UPDATE_TRICK')
-                        Simulation.q.join()
-                        Simulation.q.put('UPDATE_STATS')
-                        Simulation.q.join()
+                        Simulation.input_q.put('UPDATE_TRICK')
+                        Simulation.input_q.join()
+                        Simulation.input_q.put('UPDATE_STATS')
+                        Simulation.input_q.join()
                 highest_card = trick.get_highest_trick_card()
                 win_count_card = Simulation.winning_cards.setdefault(highest_card, 0)
                 Simulation.winning_cards[highest_card] = win_count_card + 1
@@ -139,12 +141,12 @@ class Simulation(threading.Thread):
                         print('Winning card: ' + str(highest_card) + ' from ' + str(winning_player))
                         print('==============================================================')
                 if human_player is not None:
-                    Simulation.q.put('UPDATE_HAND')
-                    Simulation.q.join()
-                    Simulation.q.put('UPDATE_STATS')
-                    Simulation.q.join()
-                    Simulation.q.put('UPDATE_TRICK_WINNER')
-                    Simulation.q.join()
+                    Simulation.input_q.put('UPDATE_HAND')
+                    Simulation.input_q.join()
+                    Simulation.input_q.put('UPDATE_STATS')
+                    Simulation.input_q.join()
+                    Simulation.input_q.put('UPDATE_TRICK_WINNER')
+                    Simulation.input_q.join()
                 players.rotate(rotate_by)
                 state.players = players
                 if human_player is not None:
@@ -175,8 +177,8 @@ class Simulation(threading.Thread):
                     print('#############################################################')
             if human_player is not None:
                 state.trick = Trick(trump_suit=trump_suit, leading_suit=None, cards=[], played_by=[])
-                Simulation.q.put('UPDATE_TRICK')
-                Simulation.q.join()
+                Simulation.input_q.put('UPDATE_TRICK')
+                Simulation.input_q.join()
 
         # evaluate winning player
         highest_score = -10000000000
@@ -197,6 +199,9 @@ class Simulation(threading.Thread):
             highest_score_player.games_won = highest_score_player.games_won + 1
             for player in state.players:
                 print(str(player) + ', Games won: ' + str(player.games_won))
+            if human_player is not None:
+                Simulation.input_q.put('GAME_OVER')
+                Simulation.input_q.join()
 
         if rollout_player is None:
             return player_final_scores

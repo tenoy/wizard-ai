@@ -10,11 +10,13 @@ from player import Player
 
 class PlayerHuman(Player, threading.Thread):
 
-    q = None
+    input_q = None
+    output_q = None
 
-    def __init__(self, number, player_type, q):
+    def __init__(self, number, player_type, input_q, output_q):
         super(PlayerHuman, self).__init__(number, player_type)
-        PlayerHuman.q = q
+        PlayerHuman.input_q = input_q
+        PlayerHuman.output_q = output_q
 
     @staticmethod
     def is_input_valid(input_value):
@@ -37,45 +39,49 @@ class PlayerHuman(Player, threading.Thread):
         print(*state.bids.items())
         is_valid_input = False
         while not is_valid_input:
-            print(f'human:  {PlayerHuman.q.queue}')
+            print(f'human:  {PlayerHuman.input_q.queue}')
             print('human: loop')
             print('human: putting ENTER_BID')
-            PlayerHuman.q.put('ENTER_BID')
-            print(f'human:  {PlayerHuman.q.queue}')
+            PlayerHuman.input_q.put('ENTER_BID')
+            print(f'human:  {PlayerHuman.input_q.queue}')
             print('human: waiting for all tasks done')
-            PlayerHuman.q.join()
+            PlayerHuman.input_q.join()
             print('human: q joined')
-            try:
-                msg = PlayerHuman.q.get(block=True)
-                print(f'human: task done')
-                PlayerHuman.q.task_done()
-                if msg == 'INPUT_BID':
-                    print('human: got INPUT_BID')
-                    human_input = PlayerHuman.q.get(block=True)
-                    print(f'human: got {human_input}')
-                    if self.is_input_valid(human_input):
-                        int_human_input = int(human_input)
-                        if self.is_valid_bid(state, int_human_input):
-                            bid = int_human_input
-                            is_valid_input = True
-                            print(f'human: task done')
-                            print(f'human:  {PlayerHuman.q.queue}')
-                            PlayerHuman.q.task_done()
+            is_bid_input_received = False
+            while not is_bid_input_received:
+                try:
+                    # time.sleep(0.05)
+                    print(f'human: call get {PlayerHuman.output_q.queue}')
+                    msg = PlayerHuman.output_q.get(block=True, timeout=1)
+                    if msg[0] == 'INPUT_BID':
+                        human_input = msg[1]
+                        print(f'human: input: {msg[1]}')
+                        is_bid_input_received = True
+                        if self.is_input_valid(human_input):
+                            int_human_input = int(human_input)
+                            if self.is_valid_bid(state, int_human_input):
+                                bid = int_human_input
+                                is_valid_input = True
+                                print(f'human: valid input')
+                                print(f'human: task done')
+                                print(f'human:  {PlayerHuman.input_q.queue}')
+                                PlayerHuman.output_q.task_done()
+                            else:
+                                print('Invalid bid. The sum of bids is not allowed to equal the round number')
+                                is_valid_input = False
+                                print(f'human: task done')
+                                print(f'human:  {PlayerHuman.input_q.queue}')
+                                PlayerHuman.output_q.task_done()
                         else:
-                            print('Invalid bid. The sum of bids is not allowed to equal the round number')
+                            print('Invalid input. Input must be a positive number.')
                             is_valid_input = False
                             print(f'human: task done')
-                            print(f'human:  {PlayerHuman.q.queue}')
-                            PlayerHuman.q.task_done()
-                    else:
-                        print('Invalid input. Input must be a positive number.')
-                        is_valid_input = False
-                        print(f'human: task done')
-                        print(f'human:  {PlayerHuman.q.queue}')
-                        PlayerHuman.q.task_done()
-            except queue.Empty:
-                print('human: sleep')
-                time.sleep(0.05)
+                            print(f'human:  {PlayerHuman.input_q.queue}')
+                            PlayerHuman.output_q.task_done()
+                except queue.Empty:
+                    print(f'human: empty q: {PlayerHuman.input_q.queue}')
+                    time.sleep(0.05)
+        print('human: loop left')
 
 
 
@@ -92,7 +98,7 @@ class PlayerHuman(Player, threading.Thread):
         #     else:
         #         print('Invalid input. Input must be a positive number.')
         #         is_valid_input = False
-
+        print(f'return value: {bid}')
         return bid
 
     def play(self, trick, bids):

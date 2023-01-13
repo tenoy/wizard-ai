@@ -2,25 +2,30 @@ import sys
 import textwrap
 from tkinter import Tk, ttk, messagebox, simpledialog
 from PIL import Image, ImageTk
+from tabulate import tabulate
 
 # list/variable must be global due to bug in ImageTk
 card_images_hand = {}
 card_image_trump = None
 card_images_trick = []
 
+
 class PlayerGui:
 
-    def __init__(self, master, initial_state, human_player):
+    output_q = None
+
+    def __init__(self, master, initial_state, human_player, output_q):
         print('###__init__###')
         # self.initial_state = initial_state
         # self.human_player = human_player
+        PlayerGui.output_q = output_q
         # gui stuff
         self.pad_x = 10
         self.pad_y = 10
 
         self.master = master
         master.title('Wizard AI')
-        master.geometry("1050x800")
+        master.geometry("1200x800")
         master.configure(background="green")
 
         self.mainframe = ttk.Frame(master, padding="3 3 12 12")
@@ -71,12 +76,15 @@ class PlayerGui:
         self.trick_group.grid(padx=self.pad_x, pady=self.pad_y, row=1, column=2, sticky='N S')
 
         self.hand_group = ttk.LabelFrame(self.mainframe, text=f'Current hand {human_player}')
-        self.hand_group.grid(padx=self.pad_x, pady=self.pad_y, row=2, column=0, columnspan=3)
+        self.hand_group.grid(padx=self.pad_x, pady=self.pad_y, row=2, column=0)
+
+        self.widget_card_dict = {}
 
         master.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def update_hand(self, state):
         # print('###update hand###')
+        self.widget_card_dict.clear()
         human_player = self.get_human_player(state)
         if len(human_player.played_cards) == 0:
             card_images_hand.clear()
@@ -102,6 +110,9 @@ class PlayerGui:
                 current_col = 0
             card_label = ttk.Label(self.hand_group, text='', image=card_images_hand[card])  # get image of card
             card_label.grid(row=current_row, column=current_col)
+            card_label.bind("<Button-1>", self.left_click)
+            # card_label.bind("<Button-1>", lambda event: self.left_click(event))
+            self.widget_card_dict[card_label] = card
             current_col = current_col + 1
 
     def update_trump(self, state):
@@ -180,6 +191,11 @@ class PlayerGui:
         return input_val
 
     @staticmethod
+    def game_over(state):
+        winning_player = max(state.players, key=lambda x: x.current_score)
+        messagebox.showinfo(message=f'Winner: {winning_player} with {winning_player.current_score}', title='Game Over.')
+
+    @staticmethod
     def get_human_player(state):
         human_plr = None
         for plr in state.players:
@@ -190,3 +206,15 @@ class PlayerGui:
     @staticmethod
     def on_closing():
         sys.exit()
+
+    def left_click(self, event):
+        print("left click")
+        caller = event.widget
+        print(caller)
+        card = self.widget_card_dict.get(caller)
+        input_card = ('INPUT_CARD', card)
+        PlayerGui.output_q.put(input_card)
+
+    @staticmethod
+    def right_click(event):
+        print("right click")

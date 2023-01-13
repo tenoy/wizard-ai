@@ -166,6 +166,9 @@ class Simulation(threading.Thread):
                 player.current_hand = []
                 player.played_cards = deque()
                 #print(str(player) + ', Score: ' + str(player.current_score))
+            if human_player is not None:
+                Simulation.input_q.put('GAME_OVER')
+                Simulation.input_q.join()
 
             # next round another player starts
             players_game_order.rotate(1)

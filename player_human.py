@@ -64,22 +64,22 @@ class PlayerHuman(Player, threading.Thread):
                                 is_valid_input = True
                                 print(f'human: valid input')
                                 print(f'human: task done')
-                                print(f'human:  {PlayerHuman.input_q.queue}')
+                                print(f'human:  {PlayerHuman.output_q.queue}')
                                 PlayerHuman.output_q.task_done()
                             else:
                                 print('Invalid bid. The sum of bids is not allowed to equal the round number')
                                 is_valid_input = False
                                 print(f'human: task done')
-                                print(f'human:  {PlayerHuman.input_q.queue}')
+                                print(f'human:  {PlayerHuman.output_q.queue}')
                                 PlayerHuman.output_q.task_done()
                         else:
                             print('Invalid input. Input must be a positive number.')
                             is_valid_input = False
                             print(f'human: task done')
-                            print(f'human:  {PlayerHuman.input_q.queue}')
+                            print(f'human:  {PlayerHuman.output_q.queue}')
                             PlayerHuman.output_q.task_done()
                 except queue.Empty:
-                    print(f'human: empty q: {PlayerHuman.input_q.queue}')
+                    print(f'human: empty q: {PlayerHuman.output_q.queue}')
                     time.sleep(0.05)
         print('human: loop left')
 
@@ -110,26 +110,50 @@ class PlayerHuman(Player, threading.Thread):
         print('Cards in trick:', end=' ')
         print(*trick.cards, sep=', ')
         self.print_current_hand()
+
         is_valid_input = False
         while not is_valid_input:
-            human_input = input('Select card: ')
-            if self.is_input_valid(human_input):
-                int_human_input = int(human_input)
-                if 0 < int_human_input <= len(self.current_hand):
-                    idx = int_human_input - 1
-                    selected_card = self.current_hand[idx]
-                    if self.is_valid_card(selected_card, trick.leading_suit):
-                        self.played_cards.appendleft(selected_card)
-                        self.current_hand.remove(selected_card)
-                        is_valid_input = True
+            is_card_input_received = False
+            while not is_card_input_received:
+                try:
+                    msg = PlayerHuman.output_q.get(block=True, timeout=1)
+                    if msg[0] == 'INPUT_CARD':
+                        selected_card = msg[1]
+                        is_card_input_received = True
+                        if self.is_valid_card(selected_card, trick.leading_suit):
+                            self.played_cards.appendleft(selected_card)
+                            self.current_hand.remove(selected_card)
+                            is_valid_input = True
+                            PlayerHuman.output_q.task_done()
+                        else:
+                            print('Invalid Card. You have at least one card that fits the suit. You must either play a card with fitting suit or a joker.')
+                            is_valid_input = False
+                            PlayerHuman.output_q.task_done()
                     else:
-                        print('Invalid Card. You have at least one card that fits the suit. You must either play a card with fitting suit or a joker.')
-                        is_valid_input = False
-                else:
-                    print('Invalid input. Input must be a number between 1 and ' + str(len(self.current_hand)) + '.')
-                    is_valid_input = False
-            else:
-                is_valid_input = False
+                        print(f'Other msg code: {msg}')
+                except queue.Empty:
+                    # print(f'human: empty output_q: {PlayerHuman.output_q.queue}')
+                    time.sleep(0.05)
+
+        # while not is_valid_input:
+        #     human_input = input('Select card: ')
+        #     if self.is_input_valid(human_input):
+        #         int_human_input = int(human_input)
+        #         if 0 < int_human_input <= len(self.current_hand):
+        #             idx = int_human_input - 1
+        #             selected_card = self.current_hand[idx]
+        #             if self.is_valid_card(selected_card, trick.leading_suit):
+        #                 self.played_cards.appendleft(selected_card)
+        #                 self.current_hand.remove(selected_card)
+        #                 is_valid_input = True
+        #             else:
+        #                 print('Invalid Card. You have at least one card that fits the suit. You must either play a card with fitting suit or a joker.')
+        #                 is_valid_input = False
+        #         else:
+        #             print('Invalid input. Input must be a number between 1 and ' + str(len(self.current_hand)) + '.')
+        #             is_valid_input = False
+        #     else:
+        #         is_valid_input = False
         return selected_card
 
     def pick_suit(self, state):

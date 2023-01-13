@@ -99,7 +99,7 @@ def process_simulation_event_queue():
                 # print('poll: call join')
                 output_q.join()
             elif msg == "GAME_OVER":
-                gui.game_over()
+                gui.game_over(s0)
                 input_q.task_done()
         except queue.Empty:
             # print(f'poll: empty {input_q.queue}')
@@ -173,7 +173,7 @@ else:
     s0 = State(players_initial_order, 1, Trick(), deck, {})
     # setup gui
     root = Tk()
-    gui = PlayerGui(root, s0, human_player)
+    gui = PlayerGui(root, s0, human_player, output_q)
     # start simulation poll thread that distributes messages between simulation, human_player and gui
     threading.Thread(target=lambda: process_simulation_event_queue(), name="Simulation Poll Thread").start()
     # start simulation thread

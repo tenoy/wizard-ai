@@ -101,6 +101,13 @@ def process_simulation_event_queue():
             elif msg == "GAME_OVER":
                 gui.game_over(s0)
                 input_q.task_done()
+            elif msg == "INVALID_CARD":
+                gui.invalid_card()
+                input_q.task_done()
+            elif msg == "INVALID_BID":
+                gui.invalid_bid()
+                input_q.task_done()
+
         except queue.Empty:
             # print(f'poll: empty {input_q.queue}')
             time.sleep(0.05)

@@ -72,6 +72,8 @@ class PlayerHuman(Player, threading.Thread):
                                 print(f'human: task done')
                                 print(f'human:  {PlayerHuman.output_q.queue}')
                                 PlayerHuman.output_q.task_done()
+                                PlayerHuman.input_q.put('INVALID_BID')
+                                PlayerHuman.input_q.join()
                         else:
                             print('Invalid input. Input must be a positive number.')
                             is_valid_input = False
@@ -129,6 +131,8 @@ class PlayerHuman(Player, threading.Thread):
                             print('Invalid Card. You have at least one card that fits the suit. You must either play a card with fitting suit or a joker.')
                             is_valid_input = False
                             PlayerHuman.output_q.task_done()
+                            PlayerHuman.input_q.put('INVALID_CARD')
+                            PlayerHuman.input_q.join()
                     else:
                         print(f'Other msg code: {msg}')
                 except queue.Empty:

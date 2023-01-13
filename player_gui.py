@@ -1,13 +1,16 @@
 import sys
 import textwrap
-from tkinter import Tk, ttk, messagebox, simpledialog
+from tkinter import Tk, ttk, messagebox, simpledialog, Toplevel
 from PIL import Image, ImageTk
 from tabulate import tabulate
 
 # list/variable must be global due to bug in ImageTk
+from enum_suit import Suit
+
 card_images_hand = {}
 card_image_trump = None
 card_images_trick = []
+card_images_suit = {}
 
 
 class PlayerGui:
@@ -76,9 +79,19 @@ class PlayerGui:
         self.trick_group.grid(padx=self.pad_x, pady=self.pad_y, row=1, column=2, sticky='N S')
 
         self.hand_group = ttk.LabelFrame(self.mainframe, text=f'Current hand {human_player}')
-        self.hand_group.grid(padx=self.pad_x, pady=self.pad_y, row=2, column=0)
+        self.hand_group.grid(padx=self.pad_x, pady=self.pad_y, row=2, column=0, columnspan=3, sticky='W')
+
+        self.select_suit_master = None
 
         self.widget_card_dict = {}
+
+        for suit in Suit:
+            if suit.name == 'JOKER':
+                suit_image_original = Image.open(f'gui/cards/jester.png')
+            else:
+                suit_image_original = Image.open(f'gui/cards/{suit}.png')
+            suit_image = suit_image_original.resize((100, 145))
+            card_images_suit[suit] = ImageTk.PhotoImage(suit_image)
 
         master.protocol("WM_DELETE_WINDOW", self.on_closing)
 
@@ -110,21 +123,27 @@ class PlayerGui:
                 current_col = 0
             card_label = ttk.Label(self.hand_group, text='', image=card_images_hand[card])  # get image of card
             card_label.grid(row=current_row, column=current_col)
-            card_label.bind("<Button-1>", self.left_click)
+            card_label.bind("<Button-1>", self.click_select_card)
             # card_label.bind("<Button-1>", lambda event: self.left_click(event))
             self.widget_card_dict[card_label] = card
             current_col = current_col + 1
 
     def update_trump(self, state):
         # print('###update trump###')
+        # if state.trick.trump_suit is None:
+        #     suit_image_original = Image.open(f'gui/cards/jester.png')
+        # else:
+        #     suit_image_original = Image.open(f'gui/cards/{state.trick.trump_suit}.png')
+        # suit_image = suit_image_original.resize((100, 145))
+        # global card_image_trump
+        # card_image_trump = ImageTk.PhotoImage(suit_image)
+        # card_label = ttk.Label(self.trump_group, text='', image=card_image_trump)  # get image of card
+        # card_label.grid(row=0, column=0)
         if state.trick.trump_suit is None:
-            suit_image_original = Image.open(f'gui/cards/jester.png')
+            suit = Suit(5)
         else:
-            suit_image_original = Image.open(f'gui/cards/{state.trick.trump_suit}.png')
-        suit_image = suit_image_original.resize((100, 145))
-        global card_image_trump
-        card_image_trump = ImageTk.PhotoImage(suit_image)
-        card_label = ttk.Label(self.trump_group, text='', image=card_image_trump)  # get image of card
+            suit = state.trick.trump_suit
+        card_label = ttk.Label(self.trump_group, text='', image=card_images_suit[suit])  # get image of card
         card_label.grid(row=0, column=0)
 
     def update_stats(self, state):
@@ -207,7 +226,7 @@ class PlayerGui:
     def on_closing():
         sys.exit()
 
-    def left_click(self, event):
+    def click_select_card(self, event):
         print("left click")
         caller = event.widget
         print(caller)
@@ -216,5 +235,15 @@ class PlayerGui:
         PlayerGui.output_q.put(input_card)
 
     @staticmethod
-    def right_click(event):
-        print("right click")
+    def invalid_card():
+        messagebox.showinfo(message='You have at least one card that fits the suit. You must either play a card with fitting suit or a joker card.', title='Invalid Card')
+
+    @staticmethod
+    def invalid_bid():
+        messagebox.showinfo(message='With your bid the sum of bids equals the round number. The sum of bids is not allowed to match the round number.',title='Invalid Bid')
+
+    def select_suit(self, event):
+        self.select_suit_master = Toplevel(self.master)
+        self.select_suit_master.title('Select a Suit')
+        self.select_suit_master.geometry('300x150')
+        self.select_suit_master.configure(bg='green')

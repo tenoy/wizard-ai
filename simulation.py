@@ -166,9 +166,9 @@ class Simulation(threading.Thread):
                 player.current_hand = []
                 player.played_cards = deque()
                 #print(str(player) + ', Score: ' + str(player.current_score))
-            if human_player is not None:
-                Simulation.input_q.put('GAME_OVER')
-                Simulation.input_q.join()
+            # if human_player is not None:
+            #     Simulation.input_q.put('GAME_OVER')
+            #     Simulation.input_q.join()
 
             # next round another player starts
             players_game_order.rotate(1)
@@ -182,6 +182,12 @@ class Simulation(threading.Thread):
                 state.trick = Trick(trump_suit=trump_suit, leading_suit=None, cards=[], played_by=[])
                 Simulation.input_q.put('UPDATE_TRICK')
                 Simulation.input_q.join()
+
+        if human_player is not None:
+            Simulation.input_q.put('UPDATE_STATS')
+            Simulation.input_q.join()
+            Simulation.input_q.put('GAME_OVER')
+            Simulation.input_q.join()
 
         # evaluate winning player
         highest_score = -10000000000
@@ -202,9 +208,6 @@ class Simulation(threading.Thread):
             highest_score_player.games_won = highest_score_player.games_won + 1
             for player in state.players:
                 print(str(player) + ', Games won: ' + str(player.games_won))
-            if human_player is not None:
-                Simulation.input_q.put('GAME_OVER')
-                Simulation.input_q.join()
 
         if rollout_player is None:
             return player_final_scores

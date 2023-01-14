@@ -107,7 +107,9 @@ def process_simulation_event_queue():
             elif msg == "INVALID_BID":
                 gui.invalid_bid()
                 input_q.task_done()
-
+            elif msg == "SELECT_SUIT":
+                gui.select_suit()
+                input_q.task_done()
         except queue.Empty:
             # print(f'poll: empty {input_q.queue}')
             time.sleep(0.05)

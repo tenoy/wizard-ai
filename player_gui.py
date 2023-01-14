@@ -1,5 +1,6 @@
 import sys
 import textwrap
+import threading
 from tkinter import Tk, ttk, messagebox, simpledialog, Toplevel
 from PIL import Image, ImageTk
 from tabulate import tabulate
@@ -84,6 +85,7 @@ class PlayerGui:
         self.select_suit_master = None
 
         self.widget_card_dict = {}
+        self.widget_suit_dict = {}
 
         for suit in Suit:
             if suit.name == 'JOKER':
@@ -224,6 +226,8 @@ class PlayerGui:
 
     @staticmethod
     def on_closing():
+        print('clicked on exit')
+        print(threading.enumerate())
         sys.exit()
 
     def click_select_card(self, event):
@@ -242,8 +246,26 @@ class PlayerGui:
     def invalid_bid():
         messagebox.showinfo(message='With your bid the sum of bids equals the round number. The sum of bids is not allowed to match the round number.',title='Invalid Bid')
 
-    def select_suit(self, event):
+    def select_suit(self):
         self.select_suit_master = Toplevel(self.master)
         self.select_suit_master.title('Select a Suit')
-        self.select_suit_master.geometry('300x150')
+        self.select_suit_master.geometry('415x150')
         self.select_suit_master.configure(bg='green')
+        col = 0
+        for suit in Suit:
+            if suit.name != 'JOKER':
+                card_label = ttk.Label(self.select_suit_master, text='', image=card_images_suit[suit])  # get image of card
+                card_label.grid(row=0, column=col)
+                card_label.bind("<Button-1>", self.click_select_suit)
+                self.widget_suit_dict[card_label] = suit
+                col = col + 1
+
+    def click_select_suit(self, event):
+        print("left click suit")
+        caller = event.widget
+        print(caller)
+        suit = self.widget_suit_dict.get(caller)
+        print(suit)
+        input_suit = ('INPUT_SUIT', suit)
+        PlayerGui.output_q.put(input_suit)
+        self.select_suit_master.destroy()

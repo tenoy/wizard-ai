@@ -80,6 +80,9 @@ class PlayerHuman(Player, threading.Thread):
                             print(f'human: task done')
                             print(f'human:  {PlayerHuman.output_q.queue}')
                             PlayerHuman.output_q.task_done()
+                    else:
+                        print(f'Other msg code: {msg}')
+                        PlayerHuman.output_q.task_done()
                 except queue.Empty:
                     print(f'human: empty q: {PlayerHuman.output_q.queue}')
                     time.sleep(0.05)
@@ -135,6 +138,7 @@ class PlayerHuman(Player, threading.Thread):
                             PlayerHuman.input_q.join()
                     else:
                         print(f'Other msg code: {msg}')
+                        PlayerHuman.output_q.task_done()
                 except queue.Empty:
                     # print(f'human: empty output_q: {PlayerHuman.output_q.queue}')
                     time.sleep(0.05)
@@ -174,19 +178,47 @@ class PlayerHuman(Player, threading.Thread):
         print('')
         is_valid_input = False
         while not is_valid_input:
-            human_input = input('Select suit: ')
-            if self.is_input_valid(human_input):
-                int_human_input = int(human_input)
-                if 0 < int_human_input <= len(Suit)-1:
-                    idx = int_human_input
-                    selected_suit = Suit(idx)
-                    is_valid_input = True
-                else:
-                    print('Invalid input. Input must be a number between 1 and ' + str(
-                        len(Suit)-1) + '.')
-                    is_valid_input = False
-            else:
-                print('Invalid input. Input must be a number.')
-                is_valid_input = False
+            is_suit_input_received = False
+            print('human: putting SELECT_SUIT')
+            PlayerHuman.input_q.put('SELECT_SUIT')
+            print(f'human:  {PlayerHuman.input_q.queue}')
+            print('human: waiting for all tasks done')
+            PlayerHuman.input_q.join()
+            while not is_suit_input_received:
+                try:
+                    msg = PlayerHuman.output_q.get(block=True, timeout=1)
+                    if msg[0] == 'INPUT_SUIT':
+                        selected_suit = msg[1]
+                        is_suit_input_received = True
+                        if selected_suit.name != "JOKER":
+                            is_valid_input = True
+                            print(f'selected {selected_suit}')
+                            PlayerHuman.output_q.task_done()
+                        else:
+                            is_valid_input = False
+                            PlayerHuman.output_q.task_done()
+                    else:
+                        print(f'Other msg code: {msg}')
+                        PlayerHuman.output_q.task_done()
+                except queue.Empty:
+                    # print(f'human: empty output_q: {PlayerHuman.output_q.queue}')
+                    time.sleep(0.05)
+
+
+        # while not is_valid_input:
+        #     human_input = input('Select suit: ')
+        #     if self.is_input_valid(human_input):
+        #         int_human_input = int(human_input)
+        #         if 0 < int_human_input <= len(Suit)-1:
+        #             idx = int_human_input
+        #             selected_suit = Suit(idx)
+        #             is_valid_input = True
+        #         else:
+        #             print('Invalid input. Input must be a number between 1 and ' + str(
+        #                 len(Suit)-1) + '.')
+        #             is_valid_input = False
+        #     else:
+        #         print('Invalid input. Input must be a number.')
+        #         is_valid_input = False
 
         return selected_suit

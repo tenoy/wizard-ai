@@ -64,6 +64,7 @@ class Simulation(threading.Thread):
             # Sample trump suit (except in last round)
             trump_card = None
             trump_suit = None
+            # players[0].pick_suit(state)
             if i < max_number_of_rounds:
                 trump_card = sampled_cards[len(sampled_cards) - 1]
                 if state.round_nr == i and rollout_player is not None:
@@ -99,6 +100,7 @@ class Simulation(threading.Thread):
                 if human_player is not None:
                     Simulation.input_q.put('UPDATE_STATS')
                     print('simulation: waiting')
+                    print(f'simulation: {Simulation.input_q.queue}')
                     Simulation.input_q.join()
 
             # Each player plays a card one after another in each trick j of round i

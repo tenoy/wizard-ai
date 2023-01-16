@@ -102,6 +102,10 @@ class Simulation(threading.Thread):
                     print('simulation: waiting')
                     print(f'simulation: {Simulation.input_q.queue}')
                     Simulation.input_q.join()
+                    Simulation.input_q.put('UPDATE_TRICK')
+                    print('simulation: waiting')
+                    print(f'simulation: {Simulation.input_q.queue}')
+                    Simulation.input_q.join()
 
             # Each player plays a card one after another in each trick j of round i
             for j in range(0, i, 1):

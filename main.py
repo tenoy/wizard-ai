@@ -182,11 +182,11 @@ else:
     s0 = State(players_initial_order, 1, Trick(), deck, {})
     # setup gui
     root = Tk()
-    gui = PlayerGui(root, s0, human_player, output_q)
+    gui = PlayerGui(root, s0, human_player, output_q, deck)
     # start simulation poll thread that distributes messages between simulation, human_player and gui
-    threading.Thread(target=lambda: process_simulation_event_queue(), name="Simulation Poll Thread").start()
+    threading.Thread(target=lambda: process_simulation_event_queue(), name="Simulation Poll Thread", daemon=True).start()
     # start simulation thread
-    threading.Thread(target=lambda: Simulation.simulate_episode(s0, human_player=human_player), name="Simulation Thread").start()
+    threading.Thread(target=lambda: Simulation.simulate_episode(s0, human_player=human_player), name="Simulation Thread", daemon=True).start()
     # start gui in main thread
     root.mainloop()
 

@@ -1,9 +1,5 @@
 import copy
 from collections import deque
-
-from card import Card
-from enum_rank import Rank
-from enum_suit import Suit
 from trick import Trick
 
 

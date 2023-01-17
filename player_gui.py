@@ -1,7 +1,7 @@
 import sys
 import textwrap
 import threading
-from tkinter import Tk, ttk, messagebox, simpledialog, Toplevel, Label
+from tkinter import Tk, ttk, messagebox, simpledialog, Toplevel, Label, Frame
 from PIL import Image, ImageTk
 
 # list/variable must be global due to bug in ImageTk
@@ -29,7 +29,7 @@ class PlayerGui:
 
         self.master = master
         master.title('Wizard AI')
-        master.geometry("1200x800")
+        master.geometry("1300x800")
         master.configure(background="green")
 
         self.style_root = ttk.Style(master)
@@ -38,6 +38,11 @@ class PlayerGui:
         self.style_frames.configure("Custom.TFrame", background="green")
         self.style_labels = ttk.Style(master)
         self.style_labels.configure("Custom.TLabel", background="green", foreground="white", font="Arial 22")
+        self.style_labels.configure("Custom2.TLabel", background="green", foreground="white", font="Arial 12 underline")
+        self.style_labels.configure("Custom3.TLabel", background="green", foreground="white", font="Arial 11")
+        self.style_label_frames = ttk.Style(master)
+        self.style_label_frames.configure("Custom.TLabelframe", background="green", foreground="white", relief="flat", padding=10)
+        self.style_label_frames.configure("Custom.TLabelframe.Label", background="green", foreground="white", font="Arial 14")
 
         self.mainframe = ttk.Frame(master, padding="3 3 12 12", style="Custom.TFrame")
         self.mainframe.grid(column=0, row=0)
@@ -45,20 +50,29 @@ class PlayerGui:
         self.round_label = ttk.Label(self.mainframe, text=f'Round {initial_state.round_nr}', style="Custom.TLabel")
         self.round_label.grid(row=0, column=0, columnspan=3)
 
-        self.stats_group = ttk.LabelFrame(self.mainframe, text="Player Stats")
-        self.stats_group.grid(padx=self.pad_x, pady=self.pad_y, row=1, column=0, sticky='N S')
+        self.stats_group_border = Frame(self.mainframe, background="white")
+        self.stats_group_border.grid(padx=self.pad_x, pady=self.pad_y, row=1, column=0, sticky='N S')
+        self.stats_group = ttk.LabelFrame(self.stats_group_border, text="Player Stats", style="Custom.TLabelframe")
+        self.stats_group.grid(padx=2, pady=2, row=0, column=0, sticky='N S E W')
 
-        self.trick_group = ttk.LabelFrame(self.mainframe, text='Trick Cards', width=200)
-        self.trick_group.grid(padx=self.pad_x, pady=self.pad_y, row=1, column=2, sticky='N S')
+        self.trump_group_border = Frame(self.mainframe, background="white")
+        self.trump_group_border.grid(padx=self.pad_x, pady=self.pad_y, row=1, column=1, sticky='S N')
+        self.trump_group = ttk.LabelFrame(self.trump_group_border, text="Trump Suit", width=100, style="Custom.TLabelframe")
+        self.trump_group.grid(padx=2, pady=2, row=0, column=0, sticky='S')
 
-        player_name_label = ttk.Label(self.stats_group, text='Playername')
-        player_name_label.grid(row=0, column=0, sticky='W', pady=self.pad_y)
-        player_bid_label = ttk.Label(self.stats_group, text='Bid')
-        player_bid_label.grid(row=0, column=1, sticky='E', pady=self.pad_y)
-        player_tricks_won_label = ttk.Label(self.stats_group, text='Tricks Won')
-        player_tricks_won_label.grid(row=0, column=2, sticky='E', pady=self.pad_y)
-        player_score_label = ttk.Label(self.stats_group, text='Score')
-        player_score_label.grid(row=0, column=3, sticky='E', pady=self.pad_y)
+        self.trick_group_border = Frame(self.mainframe, background="white")
+        self.trick_group_border.grid(padx=self.pad_x, pady=self.pad_y, row=1, column=2, sticky='N S')
+        self.trick_group = ttk.LabelFrame(self.trick_group_border, text='Trick Cards', width=200, style="Custom.TLabelframe")
+        self.trick_group.grid(padx=2, pady=2, row=0, column=0, sticky='N S E W')
+
+        player_name_label = ttk.Label(self.stats_group, text='Playername', style="Custom2.TLabel")
+        player_name_label.grid(row=0, column=0, sticky='W', pady=self.pad_y, padx=self.pad_x)
+        player_bid_label = ttk.Label(self.stats_group, text='Bid', style="Custom2.TLabel")
+        player_bid_label.grid(row=0, column=1, sticky='E', pady=self.pad_y, padx=self.pad_x)
+        player_tricks_won_label = ttk.Label(self.stats_group, text='Tricks Won', style="Custom2.TLabel")
+        player_tricks_won_label.grid(row=0, column=2, sticky='E', pady=self.pad_y, padx=self.pad_x)
+        player_score_label = ttk.Label(self.stats_group, text='Score', style="Custom2.TLabel")
+        player_score_label.grid(row=0, column=3, sticky='E', pady=self.pad_y, padx=self.pad_x)
 
         self.player_name_labels = []
         self.player_bid_labels = []
@@ -69,36 +83,37 @@ class PlayerGui:
 
         for i in range(len(initial_state.players)):
             player = initial_state.players[i]
-            player_name_label = ttk.Label(self.stats_group, text=f'{player}')
+            player_name_label = ttk.Label(self.stats_group, text=f'{player}', style="Custom3.TLabel")
             player_name_label.grid(row=i + 1, column=0, sticky='W')
             self.player_name_labels.append(player_name_label)
             if player.current_bid == -1:
                 player_bid_formatted = '-'
             else:
                 player_bid_formatted = str(player.current_bid)
-            player_bid_label = ttk.Label(self.stats_group, text=f'{player_bid_formatted}')
+            player_bid_label = ttk.Label(self.stats_group, text=f'{player_bid_formatted}', style="Custom3.TLabel")
             player_bid_label.grid(row=i + 1, column=1)
             self.player_bid_labels.append(player_bid_label)
-            player_tricks_won_label = ttk.Label(self.stats_group, text=f'{player.current_tricks_won}')
+            player_tricks_won_label = ttk.Label(self.stats_group, text=f'{player.current_tricks_won}', style="Custom3.TLabel")
             player_tricks_won_label.grid(row=i + 1, column=2)
             self.player_tricks_won_labels.append(player_tricks_won_label)
-            player_score_label = ttk.Label(self.stats_group, text=f'{player.current_score}')
+            player_score_label = ttk.Label(self.stats_group, text=f'{player.current_score}', style="Custom3.TLabel")
             player_score_label.grid(row=i + 1, column=3)
             self.player_score_labels.append(player_score_label)
             player_name_short = textwrap.shorten(str(player), width=11, placeholder="...")
-            card_frame = ttk.LabelFrame(self.trick_group, text=f'{player_name_short}')
+            card_frame = ttk.LabelFrame(self.trick_group, text=f'{player_name_short}', style="Custom3.TLabel")
             card_frame.grid(row=0, column=i, sticky='N S')
             self.player_trick_frames.append(card_frame)
             card_images_trick.append(ImageTk.PhotoImage(deck[i].card_image))
-            card_label = ttk.Label(self.player_trick_frames[i], image=card_images_trick[i])
+            card_label = Label(self.player_trick_frames[i], image=card_images_trick[i], background="green")
             card_label.grid(row=0, column=0, sticky='N S E W')
             self.player_trick_cards.append(card_label)
 
-        self.trump_group = ttk.LabelFrame(self.mainframe, text="Trump Card", width=100)
-        self.trump_group.grid(padx=self.pad_x, pady=self.pad_y, row=1, column=1, sticky='N S')
+        card_images_trick.clear()
 
-        self.hand_group = ttk.LabelFrame(self.mainframe, text=f'Current hand {human_player}')
-        self.hand_group.grid(padx=self.pad_x, pady=self.pad_y, row=2, column=0, columnspan=3, sticky='W')
+        self.hand_group_border = Frame(self.mainframe, background="white")
+        self.hand_group_border.grid(padx=self.pad_x, pady=self.pad_y, row=2, column=0, columnspan=3, sticky='W')
+        self.hand_group = ttk.LabelFrame(self.hand_group_border, text=f'Your Cards', style="Custom.TLabelframe")
+        self.hand_group.grid(padx=2, pady=2, row=0, column=0, sticky='W')
 
         self.select_suit_master = None
 
@@ -141,7 +156,7 @@ class PlayerGui:
             if current_col >= max_cards_per_row:
                 current_row = current_row + 1
                 current_col = 0
-            card_label = ttk.Label(self.hand_group, text='', image=card_images_hand[card])  # get image of card
+            card_label = ttk.Label(self.hand_group, text='', image=card_images_hand[card], style="Custom3.TLabel")  # get image of card
             card_label.grid(row=current_row, column=current_col)
             card_label.bind("<Button-1>", self.click_select_card)
             # card_label.bind("<Button-1>", lambda event: self.left_click(event))
@@ -154,7 +169,7 @@ class PlayerGui:
             suit = Suit(5)
         else:
             suit = state.trick.trump_suit
-        card_label = ttk.Label(self.trump_group, text='', image=card_images_suit[suit])  # get image of card
+        card_label = ttk.Label(self.trump_group, text='', image=card_images_suit[suit], style="Custom3.TLabel")  # get image of card
         card_label.grid(row=0, column=0, sticky='S')
 
     def update_stats(self, state):

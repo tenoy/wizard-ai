@@ -36,13 +36,16 @@ class PlayerGui:
         self.style_root.theme_use("default")
         self.style_frames = ttk.Style(master)
         self.style_frames.configure("Custom.TFrame", background="green")
+        self.style_frames.configure("Custom2.TFrame", background="white")
         self.style_labels = ttk.Style(master)
         self.style_labels.configure("Custom.TLabel", background="green", foreground="white", font="Arial 22")
         self.style_labels.configure("Custom2.TLabel", background="green", foreground="white", font="Arial 12 underline")
         self.style_labels.configure("Custom3.TLabel", background="green", foreground="white", font="Arial 11")
         self.style_label_frames = ttk.Style(master)
         self.style_label_frames.configure("Custom.TLabelframe", background="green", foreground="white", relief="flat", padding=10)
+        self.style_label_frames.configure("Custom2.TLabelframe", background="green", foreground="white", relief="flat")
         self.style_label_frames.configure("Custom.TLabelframe.Label", background="green", foreground="white", font="Arial 14")
+        self.style_label_frames.configure("Custom2.TLabelframe.Label", background="green", foreground="white", font="Arial 11")
 
         self.mainframe = ttk.Frame(master, padding="3 3 12 12", style="Custom.TFrame")
         self.mainframe.grid(column=0, row=0)
@@ -50,23 +53,25 @@ class PlayerGui:
         self.round_label = ttk.Label(self.mainframe, text=f'Round {initial_state.round_nr}', style="Custom.TLabel")
         self.round_label.grid(row=0, column=0, columnspan=3)
 
-        self.stats_group_border = Frame(self.mainframe, background="white")
+        self.stats_group_border = ttk.Frame(self.mainframe, style="Custom2.TFrame")
         self.stats_group_border.grid(padx=self.pad_x, pady=self.pad_y, row=1, column=0, sticky='N S')
         self.stats_group = ttk.LabelFrame(self.stats_group_border, text="Player Stats", style="Custom.TLabelframe")
         self.stats_group.grid(padx=2, pady=2, row=0, column=0, sticky='N S E W')
 
-        self.trump_group_border = Frame(self.mainframe, background="white")
-        self.trump_group_border.grid(padx=self.pad_x, pady=self.pad_y, row=1, column=1, sticky='S N')
+        self.trump_group_border = ttk.Frame(self.mainframe, style="Custom2.TFrame")
+        self.trump_group_border.grid(padx=0, pady=self.pad_y, row=1, column=1, sticky='S N')
         self.trump_group = ttk.LabelFrame(self.trump_group_border, text="Trump Suit", width=100, style="Custom.TLabelframe")
-        self.trump_group.grid(padx=2, pady=2, row=0, column=0, sticky='S')
+        self.trump_group.pack(padx=2, pady=2, fill='y', expand=True)
+        # self.trump_group.grid(padx=2, pady=2, row=0, column=0, sticky='N S')
 
-        self.trick_group_border = Frame(self.mainframe, background="white")
+        self.trick_group_border = ttk.Frame(self.mainframe, style="Custom2.TFrame")
         self.trick_group_border.grid(padx=self.pad_x, pady=self.pad_y, row=1, column=2, sticky='N S')
         self.trick_group = ttk.LabelFrame(self.trick_group_border, text='Trick Cards', width=200, style="Custom.TLabelframe")
-        self.trick_group.grid(padx=2, pady=2, row=0, column=0, sticky='N S E W')
+        self.trick_group.pack(padx=2, pady=2, fill='y', expand=True)
+        # self.trick_group.grid(padx=2, pady=2, row=0, column=0, sticky='N S E W')
 
         player_name_label = ttk.Label(self.stats_group, text='Playername', style="Custom2.TLabel")
-        player_name_label.grid(row=0, column=0, sticky='W', pady=self.pad_y, padx=self.pad_x)
+        player_name_label.grid(row=0, column=0, sticky='W', pady=self.pad_y)
         player_bid_label = ttk.Label(self.stats_group, text='Bid', style="Custom2.TLabel")
         player_bid_label.grid(row=0, column=1, sticky='E', pady=self.pad_y, padx=self.pad_x)
         player_tricks_won_label = ttk.Label(self.stats_group, text='Tricks Won', style="Custom2.TLabel")
@@ -100,17 +105,17 @@ class PlayerGui:
             player_score_label.grid(row=i + 1, column=3)
             self.player_score_labels.append(player_score_label)
             player_name_short = textwrap.shorten(str(player), width=11, placeholder="...")
-            card_frame = ttk.LabelFrame(self.trick_group, text=f'{player_name_short}', style="Custom3.TLabel")
+            card_frame = ttk.LabelFrame(self.trick_group, text=f'{player_name_short}', style="Custom2.TLabelframe")
             card_frame.grid(row=0, column=i, sticky='N S')
             self.player_trick_frames.append(card_frame)
             card_images_trick.append(ImageTk.PhotoImage(deck[i].card_image))
-            card_label = Label(self.player_trick_frames[i], image=card_images_trick[i], background="green")
+            card_label = ttk.Label(self.player_trick_frames[i], image=card_images_trick[i], style="Custom3.TLabel")
             card_label.grid(row=0, column=0, sticky='N S E W')
             self.player_trick_cards.append(card_label)
 
         card_images_trick.clear()
 
-        self.hand_group_border = Frame(self.mainframe, background="white")
+        self.hand_group_border = ttk.Frame(self.mainframe, style="Custom2.TFrame")
         self.hand_group_border.grid(padx=self.pad_x, pady=self.pad_y, row=2, column=0, columnspan=3, sticky='W')
         self.hand_group = ttk.LabelFrame(self.hand_group_border, text=f'Your Cards', style="Custom.TLabelframe")
         self.hand_group.grid(padx=2, pady=2, row=0, column=0, sticky='W')
@@ -169,8 +174,8 @@ class PlayerGui:
             suit = Suit(5)
         else:
             suit = state.trick.trump_suit
-        card_label = ttk.Label(self.trump_group, text='', image=card_images_suit[suit], style="Custom3.TLabel")  # get image of card
-        card_label.grid(row=0, column=0, sticky='S')
+        card_label = ttk.Label(self.trump_group, image=card_images_suit[suit], style="Custom3.TLabel")  # get image of card
+        card_label.grid(row=0, column=0, pady=0, sticky='S N')
 
     def update_stats(self, state):
         for i in range(len(state.players)):
@@ -191,7 +196,7 @@ class PlayerGui:
         for i in range(len(state.players)):
             player = state.players[i]
             player_name_short = textwrap.shorten(str(player), width=11, placeholder="...")
-            self.player_trick_frames[i].configure(text=f'{player_name_short}')
+            self.player_trick_frames[i].configure(text=f'{player_name_short}', style="Custom2.TLabelframe")
             #card_frame = ttk.LabelFrame(self.trick_group, text=f'{player_name_short}', width=110)
 
         start_index = len(card_images_trick)
@@ -205,7 +210,7 @@ class PlayerGui:
             card_images_trick.append(ImageTk.PhotoImage(state.trick.cards[i].card_image))
 
         for i in range(start_index, len(state.trick.cards)):
-            self.player_trick_cards[i].configure(image=card_images_trick[i])
+            self.player_trick_cards[i].configure(image=card_images_trick[i], style="Custom3.TLabel")
             # played_by = state.trick.played_by[i]
             # player_name_short = textwrap.shorten(str(played_by), width=11, placeholder="...")
             # card_frame = ttk.LabelFrame(self.trick_group, text=f'{player_name_short}', width=110)

@@ -10,6 +10,7 @@ from enum_suit import Suit
 card_images_hand = {}
 card_image_trump = None
 card_images_trick = []
+card_image_empty = None
 card_images_suit = {}
 
 
@@ -17,7 +18,8 @@ class PlayerGui:
 
     output_q = None
 
-    def __init__(self, master, initial_state, human_player, output_q, deck):
+    def __init__(self, master, initial_state, output_q):
+
         print('###__init__###')
         # self.initial_state = initial_state
         # self.human_player = human_player
@@ -48,7 +50,7 @@ class PlayerGui:
         self.style_label_frames.configure("Custom2.TLabelframe.Label", background="green", foreground="white", font="Arial 11")
 
         self.mainframe = ttk.Frame(master, padding="3 3 12 12", style="Custom.TFrame")
-        self.mainframe.grid(column=0, row=0)
+        self.mainframe.pack()
 
         self.round_label = ttk.Label(self.mainframe, text=f'Round {initial_state.round_nr}', style="Custom.TLabel")
         self.round_label.grid(row=0, column=0, columnspan=3)
@@ -56,18 +58,35 @@ class PlayerGui:
         self.stats_group_border = ttk.Frame(self.mainframe, style="Custom2.TFrame")
         self.stats_group_border.grid(padx=self.pad_x, pady=self.pad_y, row=1, column=0, sticky='N S')
         self.stats_group = ttk.LabelFrame(self.stats_group_border, text="Player Stats", style="Custom.TLabelframe")
-        self.stats_group.grid(padx=2, pady=2, row=0, column=0, sticky='N S E W')
+        self.stats_group.pack(padx=2, pady=2, fill='y', expand=True)
+        # self.stats_group.grid(padx=2, pady=2, row=0, column=0, sticky='N S E W')
+
+        for suit in Suit:
+            if suit.name == 'JOKER':
+                suit_image_original = Image.open(f'gui/cards/jester.png')
+            else:
+                suit_image_original = Image.open(f'gui/cards/{suit}.png')
+            suit_image = suit_image_original.resize((100, 145))
+            card_images_suit[suit] = ImageTk.PhotoImage(suit_image)
 
         self.trump_group_border = ttk.Frame(self.mainframe, style="Custom2.TFrame")
         self.trump_group_border.grid(padx=0, pady=self.pad_y, row=1, column=1, sticky='S N')
-        self.trump_group = ttk.LabelFrame(self.trump_group_border, text="Trump Suit", width=100, style="Custom.TLabelframe")
+        self.trump_group = ttk.LabelFrame(self.trump_group_border, text="Trump Suit", style="Custom.TLabelframe")
         self.trump_group.pack(padx=2, pady=2, fill='y', expand=True)
         # self.trump_group.grid(padx=2, pady=2, row=0, column=0, sticky='N S')
+        self.trump_card = ttk.Label(self.trump_group, image=card_images_suit[suit], style="Custom3.TLabel")
+        self.trump_card.pack()
+
+        empty_card_image_original = Image.open(f'gui/cards/empty.png')
+        empty_card_image = empty_card_image_original.resize((100, 145))
+        global card_image_empty
+        card_image_empty = ImageTk.PhotoImage(empty_card_image)
 
         self.trick_group_border = ttk.Frame(self.mainframe, style="Custom2.TFrame")
-        self.trick_group_border.grid(padx=self.pad_x, pady=self.pad_y, row=1, column=2, sticky='N S')
-        self.trick_group = ttk.LabelFrame(self.trick_group_border, text='Trick Cards', width=200, style="Custom.TLabelframe")
-        self.trick_group.pack(padx=2, pady=2, fill='y', expand=True)
+        self.trick_group_border.grid(padx=self.pad_x, pady=self.pad_y, row=1, column=2, sticky='N S E W')
+        # self.trick_group_border.grid_propagate(False)
+        self.trick_group = ttk.LabelFrame(self.trick_group_border, text='Trick Cards', style="Custom.TLabelframe")
+        self.trick_group.pack(padx=2, pady=2, fill='both', expand=True)
         # self.trick_group.grid(padx=2, pady=2, row=0, column=0, sticky='N S E W')
 
         player_name_label = ttk.Label(self.stats_group, text='Playername', style="Custom2.TLabel")
@@ -83,10 +102,11 @@ class PlayerGui:
         self.player_bid_labels = []
         self.player_tricks_won_labels = []
         self.player_score_labels = []
-        self.player_trick_frames = []
-        self.player_trick_cards = []
+        self.trick_frames = []
+        self.trick_cards = []
 
         for i in range(len(initial_state.players)):
+            # stats
             player = initial_state.players[i]
             player_name_label = ttk.Label(self.stats_group, text=f'{player}', style="Custom3.TLabel")
             player_name_label.grid(row=i + 1, column=0, sticky='W')
@@ -104,16 +124,17 @@ class PlayerGui:
             player_score_label = ttk.Label(self.stats_group, text=f'{player.current_score}', style="Custom3.TLabel")
             player_score_label.grid(row=i + 1, column=3)
             self.player_score_labels.append(player_score_label)
+
+            # trick
             player_name_short = textwrap.shorten(str(player), width=11, placeholder="...")
             card_frame = ttk.LabelFrame(self.trick_group, text=f'{player_name_short}', style="Custom2.TLabelframe")
             card_frame.grid(row=0, column=i, sticky='N S')
-            self.player_trick_frames.append(card_frame)
-            card_images_trick.append(ImageTk.PhotoImage(deck[i].card_image))
-            card_label = ttk.Label(self.player_trick_frames[i], image=card_images_trick[i], style="Custom3.TLabel")
-            card_label.grid(row=0, column=0, sticky='N S E W')
-            self.player_trick_cards.append(card_label)
-
-        card_images_trick.clear()
+            # card_frame.grid_rowconfigure(0, weight=1)
+            self.trick_frames.append(card_frame)
+            card_label = ttk.Label(self.trick_frames[i], image=card_image_empty, style="Custom3.TLabel")
+            card_label.pack(fill='both', expand=True)
+            # card_label.grid(row=0, column=0, sticky='N S E W')
+            self.trick_cards.append(card_label)
 
         self.hand_group_border = ttk.Frame(self.mainframe, style="Custom2.TFrame")
         self.hand_group_border.grid(padx=self.pad_x, pady=self.pad_y, row=2, column=0, columnspan=3, sticky='W')
@@ -124,14 +145,6 @@ class PlayerGui:
 
         self.widget_card_dict = {}
         self.widget_suit_dict = {}
-
-        for suit in Suit:
-            if suit.name == 'JOKER':
-                suit_image_original = Image.open(f'gui/cards/jester.png')
-            else:
-                suit_image_original = Image.open(f'gui/cards/{suit}.png')
-            suit_image = suit_image_original.resize((100, 145))
-            card_images_suit[suit] = ImageTk.PhotoImage(suit_image)
 
         master.protocol("WM_DELETE_WINDOW", self.on_closing)
 
@@ -174,8 +187,10 @@ class PlayerGui:
             suit = Suit(5)
         else:
             suit = state.trick.trump_suit
-        card_label = ttk.Label(self.trump_group, image=card_images_suit[suit], style="Custom3.TLabel")  # get image of card
-        card_label.grid(row=0, column=0, pady=0, sticky='S N')
+        self.trump_card.configure(image=card_images_suit[suit], style="Custom3.TLabel")
+        # card_label = ttk.Label(self.trump_group, image=card_images_suit[suit], style="Custom3.TLabel")  # get image of card
+        # card_label.pack()
+        # card_label.grid(row=0, column=0, pady=0, sticky='S N')
 
     def update_stats(self, state):
         for i in range(len(state.players)):
@@ -193,32 +208,24 @@ class PlayerGui:
         # print('###update trick###')
         # for widgets in self.trick_group.winfo_children():
         #     widgets.destroy()
+        print(f'card_images_size: {len(card_images_trick)}')
         for i in range(len(state.players)):
             player = state.players[i]
             player_name_short = textwrap.shorten(str(player), width=11, placeholder="...")
-            self.player_trick_frames[i].configure(text=f'{player_name_short}', style="Custom2.TLabelframe")
-            #card_frame = ttk.LabelFrame(self.trick_group, text=f'{player_name_short}', width=110)
+            self.trick_frames[i].configure(text=f'{player_name_short}', style="Custom2.TLabelframe")
+            self.trick_cards[i].configure(image=card_image_empty, style="Custom3.TLabel")
+            # card_frame = ttk.LabelFrame(self.trick_group, text=f'{player_name_short}', width=110)
 
         start_index = len(card_images_trick)
         if start_index > len(state.trick.cards):
-            print("delete all cards in trick")
+            print("###########################################delete all cards in trick")
             card_images_trick.clear()
-        # if len(state.trick.cards) == 0:
-        #     card_images_trick.clear()
 
         for i in range(start_index, len(state.trick.cards)):
             card_images_trick.append(ImageTk.PhotoImage(state.trick.cards[i].card_image))
 
-        for i in range(start_index, len(state.trick.cards)):
-            self.player_trick_cards[i].configure(image=card_images_trick[i], style="Custom3.TLabel")
-            # played_by = state.trick.played_by[i]
-            # player_name_short = textwrap.shorten(str(played_by), width=11, placeholder="...")
-            # card_frame = ttk.LabelFrame(self.trick_group, text=f'{player_name_short}', width=110)
-            # card_frame.grid(row=0, column=i, sticky='N S')
-            # card_label = ttk.Label(self.player_trick_frames[i], text='', image=card_images_trick[i])  # get image of card
-            # card_label.grid(row=0, column=i)
-
-        # # card_label.config(image=ImageTk.PhotoImage(card.card_image))
+        for i in range(len(state.trick.cards)):
+            self.trick_cards[i].configure(image=card_images_trick[i], style="Custom3.TLabel")
 
     def update_round(self, state):
         self.round_label.configure(text=f'Round {state.round_nr}', style="Custom.TLabel")

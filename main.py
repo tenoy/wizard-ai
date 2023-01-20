@@ -59,7 +59,7 @@ def process_simulation_event_queue():
         # time.sleep(0.05)
         try:
             # print(f'poll: call get {input_q.queue}')
-            msg = input_q.get(block=True, timeout=1)
+            msg = input_q.get(block=True, timeout=0.01)
             if msg == "UPDATE_HAND":
                 gui.update_hand(s0)
                 #update_hand()
@@ -112,7 +112,7 @@ def process_simulation_event_queue():
                 input_q.task_done()
         except queue.Empty:
             # print(f'poll: empty {input_q.queue}')
-            time.sleep(0.05)
+            time.sleep(0.01)
 
 
 # program mode is either 'game' (with human player) or 'simulation' (only computers)
@@ -182,7 +182,7 @@ else:
     s0 = State(players_initial_order, 1, Trick(), deck, {})
     # setup gui
     root = Tk()
-    gui = PlayerGui(root, s0, human_player, output_q, deck)
+    gui = PlayerGui(root, s0, output_q)
     # start simulation poll thread that distributes messages between simulation, human_player and gui
     threading.Thread(target=lambda: process_simulation_event_queue(), name="Simulation Poll Thread", daemon=True).start()
     # start simulation thread

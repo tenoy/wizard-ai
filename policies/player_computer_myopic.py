@@ -13,7 +13,7 @@ class PlayerComputerMyopic(PlayerComputerWeightedRandom):
             if card.rank == Rank.WIZARD:
                 bid = bid + 1
             else:
-                prob = card.calc_static_win_prob(current_hand=self.current_hand, trump_suit=state.trick.trump_suit, players=state.players)
+                prob = card.calc_static_win_prob(current_hand=self.current_hand, trump_suit=state.trick.trump_suit, players=state.players_deal_order)
                 if prob >= 0.5:
                     bid = bid + 1
         return bid

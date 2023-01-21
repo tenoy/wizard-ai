@@ -31,7 +31,7 @@ class PlayerHuman(Player, threading.Thread):
         bid = -1
         print('Round: ' + str(state.round_nr))
         print('Current Scores: ', end=' ')
-        print(*['(' + str(player) + ': ' + str(player.current_score) + ')' for player in state.players])
+        print(*['(' + str(player) + ': ' + str(player.current_score) + ')' for player in state.players_deal_order])
         print('Trump suit: ' + str(state.trick.trump_suit))
         print('Current hand:')
         print(*self.current_hand, sep=', ')

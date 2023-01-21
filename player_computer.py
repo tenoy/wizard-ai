@@ -12,7 +12,6 @@ class PlayerComputer(Player):
 
     def make_bid(self, state):
         bid = self.calculate_bid(state)
-        state.bids
         while not self.is_valid_bid(state=state, bid=bid):
             bid = self.recalculate_bid(state, bid)
 

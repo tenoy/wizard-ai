@@ -105,9 +105,9 @@ class PlayerGui:
         self.trick_frames = []
         self.trick_cards = []
 
-        for i in range(len(initial_state.players)):
+        for i in range(len(initial_state.players_deal_order)):
             # stats
-            player = initial_state.players[i]
+            player = initial_state.players_deal_order[i]
             player_name_label = ttk.Label(self.stats_group, text=f'{player}', style="Custom3.TLabel")
             player_name_label.grid(row=i + 1, column=0, sticky='W')
             self.player_name_labels.append(player_name_label)
@@ -193,8 +193,8 @@ class PlayerGui:
         # card_label.grid(row=0, column=0, pady=0, sticky='S N')
 
     def update_stats(self, state):
-        for i in range(len(state.players)):
-            player = state.players[i]
+        for i in range(len(state.players_deal_order)):
+            player = state.players_deal_order[i]
             self.player_name_labels[i].configure(text=f'{player}')
             if player.current_bid == -1:
                 player_bid_formatted = '-'
@@ -209,8 +209,8 @@ class PlayerGui:
         # for widgets in self.trick_group.winfo_children():
         #     widgets.destroy()
         print(f'card_images_size: {len(card_images_trick)}')
-        for i in range(len(state.players)):
-            player = state.players[i]
+        for i in range(len(state.players_deal_order)):
+            player = state.players_deal_order[i]
             player_name_short = textwrap.shorten(str(player), width=11, placeholder="...")
             self.trick_frames[i].configure(text=f'{player_name_short}', style="Custom2.TLabelframe")
             self.trick_cards[i].configure(image=card_image_empty, style="Custom3.TLabel")
@@ -249,13 +249,13 @@ class PlayerGui:
 
     @staticmethod
     def game_over(state):
-        winning_player = max(state.players, key=lambda x: x.current_score)
+        winning_player = max(state.players_deal_order, key=lambda x: x.current_score)
         messagebox.showinfo(message=f'Winner: {winning_player} with {winning_player.current_score}', title='Game Over.')
 
     @staticmethod
     def get_human_player(state):
         human_plr = None
-        for plr in state.players:
+        for plr in state.players_deal_order:
             if plr.player_type == 'human':
                 human_plr = plr
         return human_plr

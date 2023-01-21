@@ -24,7 +24,7 @@ class Player:
     def is_valid_bid(state, bid):
         if bid < 0:
             return False
-        if len(state.bids) == len(state.players) - 1:
+        if len(state.bids) == len(state.players_deal_order) - 1:
             if sum(state.bids.values()) + bid == state.round_nr:
                 return False
             else:

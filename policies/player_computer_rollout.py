@@ -14,33 +14,33 @@ class PlayerComputerRollout(PlayerComputerMyopic):
     def calculate_bid(self, state):
         pos_rollout_player = -1
         pos_humans = []
-        for i in range(0, len(state.players)):
-            if self == state.players[i]:
+        for i in range(0, len(state.players_deal_order)):
+            if self == state.players_deal_order[i]:
                 pos_rollout_player = i
-            if state.players[i].player_type == 'human':
+            if state.players_deal_order[i].player_type == 'human':
                 pos_humans.append(i)
 
         bid_avg_score_dict = {}
         #bid_stdev_score_dict = {}
         #bid_median_score_dict = {}
-        for bid in range(0, state.round_nr):
+        for bid in range(0, state.round_nr+1):
             # simulate n times and store score
             bid_scores = []
             for i in range(0, 128, 1):
                 # create copy of state
-                state_rollout = State(state.players, state.round_nr, state.trick, state.deck, state.bids)
+                state_rollout = State(state.players_deal_order, state.round_nr, state.trick, state.deck, state.bids)
                 # substitute every human player in copied state
                 for j in pos_humans:
-                    human_substitute = PlayerComputerRollout.substitute_player(state.players[j], PlayerComputerMyopic(self.number, 'computer', 'human_substitute_rollout'))
-                    del state_rollout.players[j]
-                    state_rollout.players.insert(j, human_substitute)
+                    human_substitute = PlayerComputerRollout.substitute_player(state.players_deal_order[j], PlayerComputerMyopic(self.number, 'computer', 'human_substitute_rollout'))
+                    del state_rollout.players_deal_order[j]
+                    state_rollout.players_deal_order.insert(j, human_substitute)
                 # substitute rollout player
                 base_policy_player = PlayerComputerRollout.substitute_player(self, PlayerComputerMyopic(self.number, 'computer', 'myopic_rollout'))
                 # set bid to evaluate
                 base_policy_player.current_bid = bid
                 # delete rollout player and insert base policy player
-                del state_rollout.players[pos_rollout_player]
-                state_rollout.players.insert(pos_rollout_player, base_policy_player)
+                del state_rollout.players_deal_order[pos_rollout_player]
+                state_rollout.players_deal_order.insert(pos_rollout_player, base_policy_player)
                 # Simulate
                 bid_scores.append(Simulation.simulate_episode(state_rollout, base_policy_player))
             bid_avg_score_dict[bid] = statistics.mean(bid_scores)

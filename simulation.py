@@ -14,9 +14,10 @@ class Simulation(threading.Thread):
 
     @staticmethod
     def simulate_episode(state, rollout_player=None, human_player=None):
-        players_game_order = state.players
-        max_number_of_rounds = int(60 / len(players_game_order))
+        players_deal_order = state.players_deal_order
+        max_number_of_rounds = int(60 / len(players_deal_order))
 
+        # the number of rounds is different for rollout simulation instances
         if rollout_player is None:
             deck = list(state.deck)
             number_of_rounds = max_number_of_rounds
@@ -24,9 +25,10 @@ class Simulation(threading.Thread):
             deck = [card for card in state.deck if card not in rollout_player.current_hand]
             number_of_rounds = state.round_nr
 
+        # simulate rounds from round_nr to min of number of rounds or max number of rounds
         for i in range(state.round_nr, min(number_of_rounds+1, max_number_of_rounds+1), 1):
             # create a new deque for 'in round order'
-            players = deque(players_game_order)
+            players = deque(players_deal_order)
             # determine number of cards to sample from deck
             if i == max_number_of_rounds:
                 number_of_sampled_cards = i*len(players)
@@ -45,9 +47,7 @@ class Simulation(threading.Thread):
                 if state.round_nr == i and rollout_player == player:
                     continue
                 player.current_hand = sampled_cards[start_idx:start_idx+i]
-                # player.current_hand = [deck[testing_card]]
                 start_idx = start_idx + i
-                # testing_card = testing_card + 1
 
             if human_player is not None:
                 Simulation.input_q.put('UPDATE_ROUND')
@@ -62,7 +62,6 @@ class Simulation(threading.Thread):
                 Simulation.input_q.join()
 
             # Sample trump suit (except in last round)
-            trump_card = None
             trump_suit = None
             # players[0].pick_suit(state)
             if i < max_number_of_rounds:
@@ -75,16 +74,24 @@ class Simulation(threading.Thread):
                     if trump_suit == Suit.JOKER:
                         # if the dealer (i.e. player[0]) pulls a wizards as trump card, he might choose a trump suit
                         if trump_card.rank == Rank.WIZARD:
+                            # player[0] is the dealer - if a wizard is drawn as trump, player[0] may choose a suit
                             trump_suit = players[0].pick_suit(state)
                         else:
                             trump_suit = None
             state.trick.trump_suit = trump_suit
 
+            # Place bids - the player after the dealer starts with bidding
+            players.rotate(1)
+            state.players_deal_order = players
+
             if human_player is not None:
                 Simulation.input_q.put('UPDATE_TRUMP')
                 Simulation.input_q.join()
+                Simulation.input_q.put('UPDATE_STATS')
+                print('simulation: waiting')
+                print(f'simulation: {Simulation.input_q.queue}')
+                Simulation.input_q.join()
 
-            # Place bids
             bids = {}
             state.bids = bids
             for player in players:
@@ -107,6 +114,9 @@ class Simulation(threading.Thread):
                     print(f'simulation: {Simulation.input_q.queue}')
                     Simulation.input_q.join()
 
+            # The player after the next player of the dealer starts the play
+            players.rotate(1)
+            state.players_deal_order = players
             # Each player plays a card one after another in each trick j of round i
             for j in range(0, i, 1):
                 trick = Trick(trump_suit=trump_suit, leading_suit=None, cards=[], played_by=[], trick_nr=j)
@@ -127,6 +137,7 @@ class Simulation(threading.Thread):
                         Simulation.input_q.join()
                         Simulation.input_q.put('UPDATE_STATS')
                         Simulation.input_q.join()
+
                 highest_card = trick.get_highest_trick_card()
                 win_count_card = Simulation.winning_cards.setdefault(highest_card, 0)
                 Simulation.winning_cards[highest_card] = win_count_card + 1
@@ -138,6 +149,7 @@ class Simulation(threading.Thread):
                     if player.played_cards[0] == highest_card:
                         player.current_tricks_won = player.current_tricks_won + 1
                         winning_player = player
+                        # determine the number for queue rotation so that winning player starts in next trick
                         rotate_by = len(players) - k
                 for player in players:
                     if player.player_type == 'human':
@@ -154,14 +166,14 @@ class Simulation(threading.Thread):
                     Simulation.input_q.put('UPDATE_TRICK_WINNER')
                     Simulation.input_q.join()
                 players.rotate(rotate_by)
-                state.players = players
+                state.players_deal_order = players
                 if human_player is not None:
                     print(*players)
-                    print(*state.players)
+                    print(*state.players_deal_order)
 
 
             # Calc score for each player and reset player hands etc
-            for player in players_game_order:
+            for player in players_deal_order:
                 if player.current_bid == player.current_tricks_won:
                     player.current_score = player.current_score + 20 + player.current_tricks_won * 10
                 else:
@@ -177,8 +189,8 @@ class Simulation(threading.Thread):
             #     Simulation.input_q.join()
 
             # next round another player starts
-            players_game_order.rotate(1)
-            state.players = players_game_order
+            players_deal_order.rotate(1)
+            state.players_deal_order = players_deal_order
             if rollout_player is None:
                 state.round_nr = i + 1
                 if 'human' in [player.player_type for player in players]:
@@ -212,7 +224,7 @@ class Simulation(threading.Thread):
             player.current_score = 0
         if rollout_player is None:
             highest_score_player.games_won = highest_score_player.games_won + 1
-            for player in state.players:
+            for player in state.players_deal_order:
                 print(str(player) + ', Games won: ' + str(player.games_won))
 
         if rollout_player is None:

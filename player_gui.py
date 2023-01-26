@@ -8,10 +8,10 @@ from PIL import Image, ImageTk
 from enum_suit import Suit
 
 card_images_hand = {}
-card_image_trump = None
+card_images_suit = {}
 card_images_trick = []
 card_image_empty = None
-card_images_suit = {}
+card_image_trump = None
 
 
 class PlayerGui:

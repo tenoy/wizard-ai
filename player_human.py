@@ -1,9 +1,6 @@
 import queue
-import sys
 import threading
 import time
-from tkinter import Tk, Button
-
 from enum_suit import Suit
 from player import Player
 
@@ -13,7 +10,7 @@ class PlayerHuman(Player, threading.Thread):
     input_q = None
     output_q = None
 
-    def __init__(self, number, player_type, input_q, output_q):
+    def __init__(self, number, player_type, input_q=None, output_q=None):
         super(PlayerHuman, self).__init__(number, player_type)
         PlayerHuman.input_q = input_q
         PlayerHuman.output_q = output_q

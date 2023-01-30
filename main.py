@@ -4,7 +4,7 @@ import textwrap
 import threading
 import time
 from collections import deque
-from tkinter import Tk, ttk, Label
+from tkinter import Tk, ttk, Label, Menu
 
 from PIL import ImageTk
 
@@ -59,7 +59,7 @@ def process_simulation_event_queue():
         # time.sleep(0.05)
         try:
             # print(f'poll: call get {input_q.queue}')
-            msg = input_q.get(block=True, timeout=0.01)
+            msg = input_q.get(block=True, timeout=0.05)
             if msg == "UPDATE_HAND":
                 gui.update_hand(s0)
                 #update_hand()
@@ -112,12 +112,12 @@ def process_simulation_event_queue():
                 input_q.task_done()
         except queue.Empty:
             # print(f'poll: empty {input_q.queue}')
-            time.sleep(0.01)
+            time.sleep(0.05)
 
 
 # program mode is either 'game' (with human player) or 'simulation' (only computers)
 global program_mode
-program_mode = 'simulation'
+program_mode = 'game'
 
 if program_mode == 'game':
     is_game_mode = True
@@ -181,6 +181,12 @@ else:
     s0 = State(players_initial_order, 1, Trick(), deck, {})
     # setup gui
     root = Tk()
+    menu = Menu(root)
+    root.config(menu=menu)
+    main_menu = Menu(menu)
+    menu.add_cascade(label='Menu', menu=main_menu)
+    main_menu.add_command(label='New Game')
+
     gui = PlayerGui(root, s0, output_q)
     # start simulation poll thread that distributes messages between simulation, human_player and gui
     threading.Thread(target=lambda: process_simulation_event_queue(), name="Simulation Poll Thread", daemon=True).start()

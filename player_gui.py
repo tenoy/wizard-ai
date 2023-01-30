@@ -52,7 +52,7 @@ class PlayerGui:
         self.mainframe = ttk.Frame(master, padding="3 3 12 12", style="Custom.TFrame")
         self.mainframe.pack()
 
-        self.round_label = ttk.Label(self.mainframe, text=f'Round {initial_state.round_nr}', style="Custom.TLabel")
+        self.round_label = ttk.Label(self.mainframe, style="Custom.TLabel")
         self.round_label.grid(row=0, column=0, columnspan=3)
 
         self.stats_group_border = ttk.Frame(self.mainframe, style="Custom2.TFrame")
@@ -69,18 +69,21 @@ class PlayerGui:
             suit_image = suit_image_original.resize((100, 145))
             card_images_suit[suit] = ImageTk.PhotoImage(suit_image)
 
-        self.trump_group_border = ttk.Frame(self.mainframe, style="Custom2.TFrame")
-        self.trump_group_border.grid(padx=0, pady=self.pad_y, row=1, column=1, sticky='S N')
-        self.trump_group = ttk.LabelFrame(self.trump_group_border, text="Trump Suit", style="Custom.TLabelframe")
-        self.trump_group.pack(padx=2, pady=2, fill='y', expand=True)
-        # self.trump_group.grid(padx=2, pady=2, row=0, column=0, sticky='N S')
-        self.trump_card = ttk.Label(self.trump_group, image=card_images_suit[suit], style="Custom3.TLabel")
-        self.trump_card.pack()
-
         empty_card_image_original = Image.open(f'gui/cards/empty.png')
         empty_card_image = empty_card_image_original.resize((100, 145))
         global card_image_empty
         card_image_empty = ImageTk.PhotoImage(empty_card_image)
+
+        self.trump_group_border = ttk.Frame(self.mainframe, style="Custom2.TFrame")
+        self.trump_group_border.grid(padx=0, pady=self.pad_y, row=1, column=1, sticky='S N')
+        self.trump_group = ttk.LabelFrame(self.trump_group_border, text="Trump Suit", style="Custom.TLabelframe")
+        self.trump_group.pack(padx=2, pady=2, fill='y', expand=True)
+        player_name_short = textwrap.shorten(str(initial_state.players_deal_order[0]), width=11, placeholder="...")
+        self.trump_card_frame = ttk.LabelFrame(self.trump_group, style="Custom2.TLabelframe")
+        self.trump_card_frame.pack()
+        # self.trump_group.grid(padx=2, pady=2, row=0, column=0, sticky='N S')
+        self.trump_card = ttk.Label(self.trump_card_frame, image=card_image_empty, style="Custom3.TLabel")
+        self.trump_card.pack()
 
         self.trick_group_border = ttk.Frame(self.mainframe, style="Custom2.TFrame")
         self.trick_group_border.grid(padx=self.pad_x, pady=self.pad_y, row=1, column=2, sticky='N S E W')
@@ -105,6 +108,40 @@ class PlayerGui:
         self.trick_frames = []
         self.trick_cards = []
 
+        self.hand_group_border = ttk.Frame(self.mainframe, style="Custom2.TFrame")
+        self.hand_group_border.grid(padx=self.pad_x, pady=self.pad_y, row=2, column=0, columnspan=3, sticky='W')
+        self.hand_group = ttk.LabelFrame(self.hand_group_border, text=f'Your Cards', style="Custom.TLabelframe")
+        self.hand_group.grid(padx=2, pady=2, row=0, column=0, sticky='W')
+
+        self.select_suit_master = None
+        self.game_options_master = None
+
+        self.widget_card_dict = {}
+        self.widget_suit_dict = {}
+
+        master.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.show_game_options()
+        self.setup_game(initial_state)
+        # PlayerGui.output_q.put('NEW_GAME')
+
+    def show_game_options(self):
+        # game start option dialogue
+        self.game_options_master = Toplevel(self.master)
+        self.game_options_master.title('Game Options')
+        self.game_options_master.geometry('415x150')
+        self.game_options_master.configure(bg='green')
+
+    def setup_game(self, initial_state):
+        print('setup_game')
+        self.player_name_labels.clear()
+        self.player_bid_labels.clear()
+        self.player_tricks_won_labels.clear()
+        self.player_score_labels.clear()
+        self.trick_frames.clear()
+        self.trick_cards.clear()
+
+        player_name_short = textwrap.shorten(str(initial_state.players_deal_order[0]), width=11, placeholder="...")
+        self.trump_card_frame.configure(text=f'{player_name_short}')
         for i in range(len(initial_state.players_deal_order)):
             # stats
             player = initial_state.players_deal_order[i]
@@ -118,7 +155,8 @@ class PlayerGui:
             player_bid_label = ttk.Label(self.stats_group, text=f'{player_bid_formatted}', style="Custom3.TLabel")
             player_bid_label.grid(row=i + 1, column=1)
             self.player_bid_labels.append(player_bid_label)
-            player_tricks_won_label = ttk.Label(self.stats_group, text=f'{player.current_tricks_won}', style="Custom3.TLabel")
+            player_tricks_won_label = ttk.Label(self.stats_group, text=f'{player.current_tricks_won}',
+                                                style="Custom3.TLabel")
             player_tricks_won_label.grid(row=i + 1, column=2)
             self.player_tricks_won_labels.append(player_tricks_won_label)
             player_score_label = ttk.Label(self.stats_group, text=f'{player.current_score}', style="Custom3.TLabel")
@@ -135,18 +173,6 @@ class PlayerGui:
             card_label.pack(fill='both', expand=True)
             # card_label.grid(row=0, column=0, sticky='N S E W')
             self.trick_cards.append(card_label)
-
-        self.hand_group_border = ttk.Frame(self.mainframe, style="Custom2.TFrame")
-        self.hand_group_border.grid(padx=self.pad_x, pady=self.pad_y, row=2, column=0, columnspan=3, sticky='W')
-        self.hand_group = ttk.LabelFrame(self.hand_group_border, text=f'Your Cards', style="Custom.TLabelframe")
-        self.hand_group.grid(padx=2, pady=2, row=0, column=0, sticky='W')
-
-        self.select_suit_master = None
-
-        self.widget_card_dict = {}
-        self.widget_suit_dict = {}
-
-        master.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def update_hand(self, state):
         # print('###update hand###')
@@ -187,14 +213,16 @@ class PlayerGui:
             suit = Suit(5)
         else:
             suit = state.trick.trump_suit
+        player_name_short = textwrap.shorten(str(state.players_deal_order[0]), width=11, placeholder="...")
+        self.trump_card_frame.configure(text=f'{player_name_short}')
         self.trump_card.configure(image=card_images_suit[suit], style="Custom3.TLabel")
         # card_label = ttk.Label(self.trump_group, image=card_images_suit[suit], style="Custom3.TLabel")  # get image of card
         # card_label.pack()
         # card_label.grid(row=0, column=0, pady=0, sticky='S N')
 
     def update_stats(self, state):
-        for i in range(len(state.players_deal_order)):
-            player = state.players_deal_order[i]
+        for i in range(len(state.players_bid_order)):
+            player = state.players_bid_order[i]
             self.player_name_labels[i].configure(text=f'{player}')
             if player.current_bid == -1:
                 player_bid_formatted = '-'
@@ -209,8 +237,8 @@ class PlayerGui:
         # for widgets in self.trick_group.winfo_children():
         #     widgets.destroy()
         print(f'card_images_size: {len(card_images_trick)}')
-        for i in range(len(state.players_deal_order)):
-            player = state.players_deal_order[i]
+        for i in range(len(state.players_play_order)):
+            player = state.players_play_order[i]
             player_name_short = textwrap.shorten(str(player), width=11, placeholder="...")
             self.trick_frames[i].configure(text=f'{player_name_short}', style="Custom2.TLabelframe")
             self.trick_cards[i].configure(image=card_image_empty, style="Custom3.TLabel")

@@ -49,7 +49,7 @@ class PlayerHuman(Player, threading.Thread):
                 try:
                     # time.sleep(0.05)
                     print(f'human: call get {PlayerHuman.output_q.queue}')
-                    msg = PlayerHuman.output_q.get(block=True, timeout=0.01)
+                    msg = PlayerHuman.output_q.get(block=True, timeout=0.05)
                     if msg[0] == 'INPUT_BID':
                         human_input = msg[1]
                         print(f'human: input: {msg[1]}')
@@ -118,7 +118,7 @@ class PlayerHuman(Player, threading.Thread):
             is_card_input_received = False
             while not is_card_input_received:
                 try:
-                    msg = PlayerHuman.output_q.get(block=True, timeout=0.01)
+                    msg = PlayerHuman.output_q.get(block=True, timeout=0.05)
                     if msg[0] == 'INPUT_CARD':
                         selected_card = msg[1]
                         is_card_input_received = True
@@ -138,7 +138,7 @@ class PlayerHuman(Player, threading.Thread):
                         PlayerHuman.output_q.task_done()
                 except queue.Empty:
                     # print(f'human: empty output_q: {PlayerHuman.output_q.queue}')
-                    time.sleep(0.01)
+                    time.sleep(0.05)
 
         # while not is_valid_input:
         #     human_input = input('Select card: ')
@@ -183,7 +183,7 @@ class PlayerHuman(Player, threading.Thread):
             PlayerHuman.input_q.join()
             while not is_suit_input_received:
                 try:
-                    msg = PlayerHuman.output_q.get(block=True, timeout=0.01)
+                    msg = PlayerHuman.output_q.get(block=True, timeout=0.05)
                     if msg[0] == 'INPUT_SUIT':
                         selected_suit = msg[1]
                         is_suit_input_received = True
@@ -199,7 +199,7 @@ class PlayerHuman(Player, threading.Thread):
                         PlayerHuman.output_q.task_done()
                 except queue.Empty:
                     # print(f'human: empty output_q: {PlayerHuman.output_q.queue}')
-                    time.sleep(0.01)
+                    time.sleep(0.05)
 
 
         # while not is_valid_input:

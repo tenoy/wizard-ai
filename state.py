@@ -13,8 +13,8 @@ from trick import Trick
 
 class State:
 
-    def __init__(self, players_deal_order, round_nr, trick, deck, bids):
-        # deal order is the deep copy list (necessary for rollout policy)
+    def __init__(self, players_deal_order, round_nr, trick, deck, bids, players_bid_order=None, players_play_order=None, rotate_players_play_order=-2):
+        # deal order list is used for the deep copy (necessary for rollout policy)
         self.players_deal_order = deque()
         for player in players_deal_order:
             # player_copy = copy.deepcopy(player)
@@ -28,7 +28,11 @@ class State:
             self.players_deal_order.append(player_copy)
         # bid and play order are shallow copies of deal order deep copy
         self.players_bid_order = deque(self.players_deal_order)
+        if players_bid_order is not None:
+            self.players_bid_order.rotate(-1)
         self.players_play_order = deque(self.players_deal_order)
+        if players_play_order is not None:
+            self.players_play_order.rotate(rotate_players_play_order)
         self.round_nr = round_nr
         self.trick = Trick(trump_suit=trick.trump_suit, leading_suit=trick.leading_suit, cards=list(trick.cards), played_by=list(trick.played_by))
         self.deck = list(deck)
@@ -49,7 +53,7 @@ class State:
         elif isinstance(player, PlayerComputerWeightedRandom):
             return PlayerComputerWeightedRandom(player.number, player.player_type, player.policy)
         elif isinstance(player, PlayerHuman):
-            return PlayerHuman(player.number, player.player_type)
+            return PlayerHuman(player.number, player.player_type, input_q=player.input_q, output_q=player.output_q)
         else:
             return PlayerComputer(player.number, player.player_type, player.policy)
 

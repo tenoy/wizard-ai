@@ -53,7 +53,7 @@ class State:
         elif isinstance(player, PlayerComputerWeightedRandom):
             return PlayerComputerWeightedRandom(player.number, player.player_type, player.policy)
         elif isinstance(player, PlayerHuman):
-            return PlayerHuman(player.number, player.player_type, input_q=player.input_q, output_q=player.output_q)
+            return PlayerHuman(player.number, player.player_type, player_name=player.name, input_q=player.input_q, output_q=player.output_q)
         else:
             return PlayerComputer(player.number, player.player_type, player.policy)
 

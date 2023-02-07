@@ -1,11 +1,21 @@
 import sys
 import textwrap
 import threading
-from tkinter import Tk, ttk, messagebox, simpledialog, Toplevel, Label, Frame
+from datetime import time
+from tkinter import Tk, ttk, messagebox, simpledialog, Toplevel, Label, Frame, Menu, Listbox, Button, END, Entry
 from PIL import Image, ImageTk
+from enum_suit import Suit
+from player_human import PlayerHuman
+from policies.player_computer_dynamic_weighted_random import PlayerComputerDynamicWeightedRandom
+from policies.player_computer_myopic import PlayerComputerMyopic
+from policies.player_computer_random import PlayerComputerRandom
+from policies.player_computer_rollout import PlayerComputerRollout
+from policies.player_computer_weighted_random import PlayerComputerWeightedRandom
+from simulation import Simulation
+from state import State
+from trick import Trick
 
 # list/variable must be global due to bug in ImageTk
-from enum_suit import Suit
 
 card_images_hand = {}
 card_images_suit = {}
@@ -17,13 +27,17 @@ card_image_trump = None
 class PlayerGui:
 
     output_q = None
+    input_q = None
 
-    def __init__(self, master, initial_state, output_q):
+    def __init__(self, master, deck, input_q, output_q):
 
         print('###__init__###')
         # self.initial_state = initial_state
         # self.human_player = human_player
         PlayerGui.output_q = output_q
+        PlayerGui.input_q = input_q
+        self.deck = deck
+        self.human_player = None
 
         # gui stuff
         self.pad_x = 10
@@ -33,6 +47,12 @@ class PlayerGui:
         master.title('Wizard AI')
         master.geometry("1300x800")
         master.configure(background="green")
+
+        menu = Menu(master)
+        master.config(menu=menu)
+        main_menu = Menu(menu)
+        menu.add_cascade(label='Menu', menu=main_menu)
+        main_menu.add_command(label='New Game', command=self.show_game_options)
 
         self.style_root = ttk.Style(master)
         self.style_root.theme_use("default")
@@ -78,7 +98,7 @@ class PlayerGui:
         self.trump_group_border.grid(padx=0, pady=self.pad_y, row=1, column=1, sticky='S N')
         self.trump_group = ttk.LabelFrame(self.trump_group_border, text="Trump Suit", style="Custom.TLabelframe")
         self.trump_group.pack(padx=2, pady=2, fill='y', expand=True)
-        player_name_short = textwrap.shorten(str(initial_state.players_deal_order[0]), width=11, placeholder="...")
+        # player_name_short = textwrap.shorten(str(initial_state.players_deal_order[0]), width=11, placeholder="...")
         self.trump_card_frame = ttk.LabelFrame(self.trump_group, style="Custom2.TLabelframe")
         self.trump_card_frame.pack()
         # self.trump_group.grid(padx=2, pady=2, row=0, column=0, sticky='N S')
@@ -119,20 +139,145 @@ class PlayerGui:
         self.widget_card_dict = {}
         self.widget_suit_dict = {}
 
+        self.entry_human_player_name = None
+        self.add_computer_list = None
+        self.selected_computer_list = None
+
+        self.state = None
+        self.simulation_thread = None
+        self.enter_bid_window = None
+
         master.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.show_game_options()
-        self.setup_game(initial_state)
-        # PlayerGui.output_q.put('NEW_GAME')
 
     def show_game_options(self):
         # game start option dialogue
+        if self.state is None:
+            self.master.withdraw()
         self.game_options_master = Toplevel(self.master)
         self.game_options_master.title('Game Options')
-        self.game_options_master.geometry('415x150')
-        self.game_options_master.configure(bg='green')
+        self.game_options_master.geometry('600x400')
+        # self.game_options_master.grab_set()
+        self.game_options_master.focus_force()
 
-    def setup_game(self, initial_state):
+        mainframe_game_options = ttk.Frame(self.game_options_master, style="Custom.TFrame", relief='solid')
+        mainframe_game_options.pack()
+
+        # input for human player name
+        frame_human_player_name = ttk.Frame(mainframe_game_options, style="Custom.TFrame")
+        frame_human_player_name.grid(row=0, column=0, columnspan=3, padx=10, pady=10, sticky='W')
+        label_human_player_name = ttk.Label(frame_human_player_name, text=f'Enter Your Name: ', style="Custom3.TLabel")
+        label_human_player_name.pack(side='left')
+        self.entry_human_player_name = Entry(frame_human_player_name)
+        self.entry_human_player_name.insert(END, 'Wizard Player')
+        self.entry_human_player_name.pack(side='left')
+
+        # list with different levels of computer players
+        frame_add_computer = ttk.Frame(mainframe_game_options, style="Custom.TFrame")
+        frame_add_computer.grid(row=1, column=0, padx=10, pady=10)
+        add_computer_label = ttk.Label(frame_add_computer, text="Add Computer Player(s)", style="Custom3.TLabel")
+        add_computer_label.pack(padx=10)
+        self.add_computer_list = Listbox(frame_add_computer, exportselection=True, width=35, height=15)
+        self.add_computer_list.pack(padx=10, pady=10)
+        self.add_computer_list.insert(0, 'Idiot')
+        self.add_computer_list.insert(1, 'Easy')
+        self.add_computer_list.insert(2, 'Medium')
+        self.add_computer_list.insert(3, 'Hard')
+        self.add_computer_list.insert(4, 'Expert')
+
+        # Buttons for adding and removing computer players
+        frame_buttons = ttk.Frame(mainframe_game_options, style="Custom.TFrame")
+        frame_buttons.grid(row=1, column=1, padx=10, pady=10)
+        add_computer_button = Button(frame_buttons, text='+', command=self.add_computer_player, height=2, width=5)
+        add_computer_button.pack(pady=10)
+        remove_computer_button = Button(frame_buttons, text='-', command=self.remove_computer_player, height=2, width=5)
+        remove_computer_button.pack(pady=10)
+
+        # list with selected computer players
+        frame_selected_computer = ttk.Frame(mainframe_game_options, style="Custom.TFrame")
+        frame_selected_computer.grid(row=1, column=2, padx=10, pady=10)
+        selected_computer_label = ttk.Label(frame_selected_computer, text="Selected Computer Player(s)", style="Custom3.TLabel")
+        selected_computer_label.pack(padx=10)
+        self.selected_computer_list = Listbox(frame_selected_computer, exportselection=True, width=35, height=15)
+        self.selected_computer_list.pack(padx=10, pady=10)
+
+        # start game button
+        start_game_button = Button(mainframe_game_options, text='Start Game!', command=self.start_game)
+        start_game_button.grid(row=2, column=0, columnspan=3, padx=10, pady=10)
+
+    def add_computer_player(self):
+        selection = self.add_computer_list.curselection()
+        if len(selection) > 0:
+            selection_computer = self.add_computer_list.get(selection)
+            print(f'added computer: {selection_computer}')
+            if self.selected_computer_list.size() > 4:
+                messagebox.showinfo(message=f'You cannot add more than 5 players')
+            else:
+                self.selected_computer_list.insert(END, selection_computer)
+
+    def remove_computer_player(self):
+        selection = self.selected_computer_list.curselection()
+        if len(selection) > 0:
+            self.selected_computer_list.delete(self.selected_computer_list.curselection())
+
+    def start_game(self):
+        if self.selected_computer_list.size() < 2:
+            messagebox.showinfo(message=f'You have to add at least 2 players')
+        else:
+            self.setup_game()
+            print(f'{self.master.state()}')
+            self.master.deiconify()
+            print(f'{self.master.state()}')
+            print(f'{threading.enumerate()}')
+
+    def setup_game(self):
         print('setup_game')
+
+        players_initial_order = list()
+        self.human_player = PlayerHuman(1, 'human', player_name='Wizard Player', input_q=PlayerGui.input_q, output_q=PlayerGui.output_q)
+        human_player_name = self.entry_human_player_name.get()
+        self.human_player.name = human_player_name
+        players_initial_order.append(self.human_player)
+
+        for idx, entry in enumerate(self.selected_computer_list.get(0, END)):
+            print(f'{entry}')
+            nr = idx+2
+            if entry == 'Idiot':
+                players_initial_order.append(PlayerComputerRandom(nr, 'computer', entry))
+            if entry == 'Easy':
+                players_initial_order.append(PlayerComputerWeightedRandom(nr, 'computer', entry))
+            if entry == 'Medium':
+                players_initial_order.append(PlayerComputerDynamicWeightedRandom(nr, 'computer', entry))
+            if entry == 'Hard':
+                players_initial_order.append(PlayerComputerMyopic(nr, 'computer', entry))
+            if entry == 'Expert':
+                players_initial_order.append(PlayerComputerRollout(nr, 'computer', entry))
+
+        self.state = State(players_initial_order, 1, Trick(), self.deck, {})
+        # threading.Thread(target=lambda: PlayerGui.process_simulation_event_queue(initial_state), name="Simulation Poll Thread", daemon=True).start()
+        # todo: either "restart" previous simulation thread or kill previous simulation thread
+        if self.simulation_thread is not None:
+            PlayerGui.output_q.put('GAME_RESTART')
+            self.simulation_thread.join()
+        self.simulation_thread = threading.Thread(target=lambda: Simulation.simulate_episode(self.state, human_player=self.human_player), name="Simulation Thread", daemon=True)
+        with PlayerGui.input_q.mutex:
+            PlayerGui.input_q.queue.clear()
+        with PlayerGui.output_q.mutex:
+            PlayerGui.output_q.queue.clear()
+        print(f'Input q: {PlayerGui.input_q.queue}')
+        print(f'Output q: {PlayerGui.output_q.queue}')
+        self.simulation_thread.start()
+
+        # self.player_name_labels.clear()
+        for i in range(len(self.player_name_labels)):
+            print('destroying old widgets')
+            self.player_name_labels[i].destroy()
+            self.player_bid_labels[i].destroy()
+            self.player_tricks_won_labels[i].destroy()
+            self.player_score_labels[i].destroy()
+            self.trick_frames[i].destroy()
+            self.trick_cards[i].destroy()
+
         self.player_name_labels.clear()
         self.player_bid_labels.clear()
         self.player_tricks_won_labels.clear()
@@ -140,11 +285,11 @@ class PlayerGui:
         self.trick_frames.clear()
         self.trick_cards.clear()
 
-        player_name_short = textwrap.shorten(str(initial_state.players_deal_order[0]), width=11, placeholder="...")
+        player_name_short = textwrap.shorten(str(self.state.players_deal_order[0]), width=11, placeholder="...")
         self.trump_card_frame.configure(text=f'{player_name_short}')
-        for i in range(len(initial_state.players_deal_order)):
+        for i in range(len(self.state.players_deal_order)):
             # stats
-            player = initial_state.players_deal_order[i]
+            player = self.state.players_deal_order[i]
             player_name_label = ttk.Label(self.stats_group, text=f'{player}', style="Custom3.TLabel")
             player_name_label.grid(row=i + 1, column=0, sticky='W')
             self.player_name_labels.append(player_name_label)
@@ -155,8 +300,7 @@ class PlayerGui:
             player_bid_label = ttk.Label(self.stats_group, text=f'{player_bid_formatted}', style="Custom3.TLabel")
             player_bid_label.grid(row=i + 1, column=1)
             self.player_bid_labels.append(player_bid_label)
-            player_tricks_won_label = ttk.Label(self.stats_group, text=f'{player.current_tricks_won}',
-                                                style="Custom3.TLabel")
+            player_tricks_won_label = ttk.Label(self.stats_group, text=f'{player.current_tricks_won}', style="Custom3.TLabel")
             player_tricks_won_label.grid(row=i + 1, column=2)
             self.player_tricks_won_labels.append(player_tricks_won_label)
             player_score_label = ttk.Label(self.stats_group, text=f'{player.current_score}', style="Custom3.TLabel")
@@ -173,8 +317,10 @@ class PlayerGui:
             card_label.pack(fill='both', expand=True)
             # card_label.grid(row=0, column=0, sticky='N S E W')
             self.trick_cards.append(card_label)
+        self.game_options_master.destroy()
 
-    def update_hand(self, state):
+    def update_hand(self):
+        state = self.state
         # print('###update hand###')
         self.widget_card_dict.clear()
         human_player = self.get_human_player(state)
@@ -207,7 +353,8 @@ class PlayerGui:
             self.widget_card_dict[card_label] = card
             current_col = current_col + 1
 
-    def update_trump(self, state):
+    def update_trump(self):
+        state = self.state
         if state.trick.trump_suit is None:
             # Suit 5 is the Joker suit
             suit = Suit(5)
@@ -220,7 +367,8 @@ class PlayerGui:
         # card_label.pack()
         # card_label.grid(row=0, column=0, pady=0, sticky='S N')
 
-    def update_stats(self, state):
+    def update_stats(self):
+        state = self.state
         for i in range(len(state.players_bid_order)):
             player = state.players_bid_order[i]
             self.player_name_labels[i].configure(text=f'{player}')
@@ -232,7 +380,8 @@ class PlayerGui:
             self.player_tricks_won_labels[i].configure(text=f'{player.current_tricks_won}')
             self.player_score_labels[i].configure(text=f'{player.current_score}')
 
-    def update_trick(self, state):
+    def update_trick(self):
+        state = self.state
         # print('###update trick###')
         # for widgets in self.trick_group.winfo_children():
         #     widgets.destroy()
@@ -255,24 +404,31 @@ class PlayerGui:
         for i in range(len(state.trick.cards)):
             self.trick_cards[i].configure(image=card_images_trick[i], style="Custom3.TLabel")
 
-    def update_round(self, state):
+    def update_round(self):
+        state = self.state
         self.round_label.configure(text=f'Round {state.round_nr}', style="Custom.TLabel")
 
-    @staticmethod
-    def update_trick_winner(state):
-        winning_card = state.trick.get_highest_trick_card()
-        winning_card_idx = state.trick.cards.index(winning_card)
-        winning_player = state.trick.played_by[winning_card_idx]
+    def update_trick_winner(self):
+        winning_card = self.state.trick.get_highest_trick_card()
+        winning_card_idx = self.state.trick.cards.index(winning_card)
+        winning_player = self.state.trick.played_by[winning_card_idx]
         messagebox.showinfo(message=f'Winning card: {winning_card} from {winning_player}')
 
-    @staticmethod
-    def enter_bid():
-        new_win = Tk()
-        new_win.withdraw()
+    def enter_bid(self):
+        # todo: implement own custom dialog that can be destroyed when restarting game
+        self.enter_bid_window = Tk()
+        self.enter_bid_window.withdraw()
+        # new_win = Tk()
+        # new_win.withdraw()
         # print('###enter_bid###')
-        input_val = simpledialog.askinteger(title='Input', prompt='Enter your bid', parent=new_win)
-        # print(f'Input value: {input_val}')
-        new_win.destroy()
+
+        # test_frame = Toplevel(self.enter_bid_window)
+        # test_frame.title('TEST')
+        # test_frame.geometry('600x400')
+        input_val = simpledialog.askinteger(title='Input', prompt='Enter your bid', parent=self.enter_bid_window)
+        print(f'Input value: {input_val}')
+        # new_win.destroy()
+        self.enter_bid_window.destroy()
         return input_val
 
     @staticmethod

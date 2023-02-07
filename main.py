@@ -61,28 +61,28 @@ def process_simulation_event_queue():
             # print(f'poll: call get {input_q.queue}')
             msg = input_q.get(block=True, timeout=0.05)
             if msg == "UPDATE_HAND":
-                gui.update_hand(s0)
+                gui.update_hand()
                 #update_hand()
                 input_q.task_done()
             elif msg == "UPDATE_TRUMP":
                 # print('update trump')
-                gui.update_trump(s0)
+                gui.update_trump()
                 input_q.task_done()
             elif msg == "UPDATE_STATS":
                 # print('update stats')
-                gui.update_stats(s0)
+                gui.update_stats()
                 input_q.task_done()
             elif msg == "UPDATE_TRICK":
                 # print('update trick')
-                gui.update_trick(s0)
+                gui.update_trick()
                 input_q.task_done()
             elif msg == "UPDATE_ROUND":
                 # print('update round')
-                gui.update_round(s0)
+                gui.update_round()
                 input_q.task_done()
             elif msg == "UPDATE_TRICK_WINNER":
                 # print('update trick winner')
-                gui.update_trick_winner(s0)
+                gui.update_trick_winner()
                 input_q.task_done()
             elif msg == "ENTER_BID":
                 print('poll: call enter bid gui')
@@ -167,7 +167,7 @@ else:
     Simulation.input_q = input_q
     Simulation.output_q = output_q
     # setup human player
-    human_player = PlayerHuman(6, 'human', input_q=input_q, output_q=output_q)
+    human_player = PlayerHuman(1, 'human', player_name='Wizard Player', input_q=input_q, output_q=output_q)
     # setup players
     players_initial_order = deque()
     players_initial_order.append(PlayerComputerRandom(1, 'computer', "random"))
@@ -175,23 +175,18 @@ else:
     players_initial_order.append(PlayerComputerDynamicWeightedRandom(3, 'computer', "dynamic_wr"))
     players_initial_order.append(PlayerComputerMyopic(4, 'computer', "heuristic"))
     players_initial_order.append(PlayerComputerRollout(5, 'computer', "rollout"))
-    players_initial_order.append(human_player)
+    # players_initial_order.append(human_player)
     # setup state
     number_of_rounds = int(60 / len(players_initial_order))
     s0 = State(players_initial_order, 1, Trick(), deck, {})
     # setup gui
     root = Tk()
-    menu = Menu(root)
-    root.config(menu=menu)
-    main_menu = Menu(menu)
-    menu.add_cascade(label='Menu', menu=main_menu)
-    main_menu.add_command(label='New Game')
 
-    gui = PlayerGui(root, s0, output_q)
+    gui = PlayerGui(root, deck, input_q, output_q)
     # start simulation poll thread that distributes messages between simulation, human_player and gui
     threading.Thread(target=lambda: process_simulation_event_queue(), name="Simulation Poll Thread", daemon=True).start()
     # start simulation thread
-    threading.Thread(target=lambda: Simulation.simulate_episode(s0, human_player=human_player), name="Simulation Thread", daemon=True).start()
+    # threading.Thread(target=lambda: Simulation.simulate_episode(s0, human_player=human_player), name="Simulation Thread", daemon=True).start()
     # start gui in main thread
     root.mainloop()
 

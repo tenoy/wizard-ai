@@ -1,22 +1,32 @@
 import queue
+import sys
 import threading
 import time
 from enum_suit import Suit
 from player import Player
 
 
-class PlayerHuman(Player, threading.Thread):
+class PlayerHuman(Player):
 
     input_q = None
     output_q = None
 
-    def __init__(self, number, player_type, input_q=None, output_q=None):
+    def __init__(self, number, player_type, player_name='', input_q=None, output_q=None):
         super(PlayerHuman, self).__init__(number, player_type)
+        self.name = player_name
         PlayerHuman.input_q = input_q
         PlayerHuman.output_q = output_q
 
+    def __str__(self):
+        return 'Player_' + str(self.number) + ' ' + self.name
+
+    def __repr__(self):
+        return 'Player_' + str(self.number) + ' ' + self.name
+
     @staticmethod
     def is_input_valid(input_value):
+        if input_value is None:
+            return False
         try:
             int(input_value)
             is_valid = True
@@ -43,12 +53,12 @@ class PlayerHuman(Player, threading.Thread):
             print(f'human:  {PlayerHuman.input_q.queue}')
             print('human: waiting for all tasks done')
             PlayerHuman.input_q.join()
-            print('human: q joined')
+            print('human: input q joined')
             is_bid_input_received = False
             while not is_bid_input_received:
                 try:
                     # time.sleep(0.05)
-                    print(f'human: call get {PlayerHuman.output_q.queue}')
+                    print(f'human: call get bid from output q: {PlayerHuman.output_q.queue}')
                     msg = PlayerHuman.output_q.get(block=True, timeout=0.05)
                     if msg[0] == 'INPUT_BID':
                         human_input = msg[1]
@@ -77,11 +87,17 @@ class PlayerHuman(Player, threading.Thread):
                             print(f'human: task done')
                             print(f'human:  {PlayerHuman.output_q.queue}')
                             PlayerHuman.output_q.task_done()
+                    elif msg == 'GAME_RESTART':
+                        print('GAME_RESTART received! Restarting...')
+                        is_valid_input = True
+                        is_bid_input_received = True
+                        PlayerHuman.output_q.task_done()
+                        sys.exit()
                     else:
-                        print(f'Other msg code: {msg}')
+                        print(f'(Bid) Other msg code: {msg}')
                         PlayerHuman.output_q.task_done()
                 except queue.Empty:
-                    print(f'human: empty q: {PlayerHuman.output_q.queue}')
+                    print(f'human bid: empty q: {PlayerHuman.output_q.queue}')
                     time.sleep(0.01)
         print('human: loop left')
 
@@ -133,11 +149,17 @@ class PlayerHuman(Player, threading.Thread):
                             PlayerHuman.output_q.task_done()
                             PlayerHuman.input_q.put('INVALID_CARD')
                             PlayerHuman.input_q.join()
+                    elif msg == 'GAME_RESTART':
+                        print('GAME_RESTART received! Restarting...')
+                        is_valid_input = True
+                        is_card_input_received = True
+                        PlayerHuman.output_q.task_done()
+                        sys.exit()
                     else:
-                        print(f'Other msg code: {msg}')
+                        print(f'(Play) Other msg code: {msg}')
                         PlayerHuman.output_q.task_done()
                 except queue.Empty:
-                    # print(f'human: empty output_q: {PlayerHuman.output_q.queue}')
+                    print(f'human play: empty output_q: {PlayerHuman.output_q.queue}')
                     time.sleep(0.05)
 
         # while not is_valid_input:
@@ -195,10 +217,10 @@ class PlayerHuman(Player, threading.Thread):
                             is_valid_input = False
                             PlayerHuman.output_q.task_done()
                     else:
-                        print(f'Other msg code: {msg}')
+                        print(f'(Select Suit) Other msg code: {msg}')
                         PlayerHuman.output_q.task_done()
                 except queue.Empty:
-                    # print(f'human: empty output_q: {PlayerHuman.output_q.queue}')
+                    print(f'human suit: empty output_q: {PlayerHuman.output_q.queue}')
                     time.sleep(0.05)
 
 

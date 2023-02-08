@@ -150,6 +150,8 @@ class PlayerGui:
         self.enter_bid_entry = None
         self.enter_bid_button = None
 
+        self.game_over_window = None
+
         master.protocol("WM_DELETE_WINDOW", self.on_closing_root)
         self.show_game_options()
 
@@ -429,7 +431,7 @@ class PlayerGui:
 
             self.enter_bid_entry = Entry(self.enter_bid_window)
             self.enter_bid_entry.pack(pady=10)
-            self.enter_bid_button = Button(self.enter_bid_window, text='Bid', command=self.input_bid)
+            self.enter_bid_button = Button(self.enter_bid_window, text='Bid', command=self.input_bid, height=1, width=6)
             self.enter_bid_button.pack(pady=10)
         else:
             self.enter_bid_window.deiconify()
@@ -445,11 +447,31 @@ class PlayerGui:
         # self.enter_bid_window.destroy()
         self.enter_bid_window.withdraw()
 
+    def game_over(self):
+        x_pos = self.master.winfo_x()
+        y_pos = self.master.winfo_y()
+        winning_player = max(self.state.players_deal_order, key=lambda x: x.current_score)
+        self.game_over_window = Toplevel(self.master)
+        self.game_over_window.title('Game Over!')
+        self.game_over_window.geometry('300x100')
+        self.game_over_window.geometry("+%d+%d" % (x_pos + 500, y_pos + 350))
+        self.game_over_window.wm_transient(self.master)
+        self.game_over_window.focus_force()
+        game_over_mainframe = Frame(self.game_over_window)
+        game_over_mainframe.pack(pady=(10, 2))
+        winner_label = Label(game_over_mainframe, text=f'Winner: {winning_player} with {winning_player.current_score} points')
+        winner_label.pack(padx=10, pady=10)
+        buttons_frame = Frame(game_over_mainframe)
+        buttons_frame.pack(padx=10, pady=10)
+        exit_button = Button(buttons_frame, text='Exit', command=self.on_closing_root, height=2, width=9)
+        exit_button.pack(padx=10, side='left')
+        new_game_button = Button(buttons_frame, text='New Game', command=self.start_new_game, height=2, width=9)
+        new_game_button.pack(padx=10, side='right')
+        # messagebox.showinfo(message=f'Winner: {winning_player} with {winning_player.current_score}', title='Game Over.')
 
-    @staticmethod
-    def game_over(state):
-        winning_player = max(state.players_deal_order, key=lambda x: x.current_score)
-        messagebox.showinfo(message=f'Winner: {winning_player} with {winning_player.current_score}', title='Game Over.')
+    def start_new_game(self):
+        self.game_over_window.destroy()
+        self.show_game_options()
 
     @staticmethod
     def get_human_player(state):

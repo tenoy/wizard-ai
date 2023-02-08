@@ -99,7 +99,7 @@ def process_simulation_event_queue():
                 # print('poll: call join')
                 output_q.join()
             elif msg == "GAME_OVER":
-                gui.game_over(s0)
+                gui.game_over()
                 input_q.task_done()
             elif msg == "INVALID_CARD":
                 gui.invalid_card()

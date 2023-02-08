@@ -28,8 +28,11 @@ class PlayerHuman(Player):
         if input_value is None:
             return False
         try:
-            int(input_value)
-            is_valid = True
+            input_int = int(input_value)
+            if input_int < 0:
+                is_valid = False
+            else:
+                is_valid = True
         except ValueError:
             is_valid = False
         return is_valid
@@ -58,7 +61,7 @@ class PlayerHuman(Player):
             while not is_bid_input_received:
                 try:
                     # time.sleep(0.05)
-                    print(f'human: call get bid from output q: {PlayerHuman.output_q.queue}')
+                    # print(f'human: call get bid from output q: {PlayerHuman.output_q.queue}')
                     msg = PlayerHuman.output_q.get(block=True, timeout=0.05)
                     if msg[0] == 'INPUT_BID':
                         human_input = msg[1]
@@ -87,6 +90,8 @@ class PlayerHuman(Player):
                             print(f'human: task done')
                             print(f'human:  {PlayerHuman.output_q.queue}')
                             PlayerHuman.output_q.task_done()
+                            PlayerHuman.input_q.put('INVALID_INPUT')
+                            PlayerHuman.input_q.join()
                     elif msg == 'GAME_RESTART':
                         print('GAME_RESTART received! Restarting...')
                         is_valid_input = True
@@ -97,7 +102,7 @@ class PlayerHuman(Player):
                         print(f'(Bid) Other msg code: {msg}')
                         PlayerHuman.output_q.task_done()
                 except queue.Empty:
-                    print(f'human bid: empty q: {PlayerHuman.output_q.queue}')
+                    # print(f'human bid: empty q: {PlayerHuman.output_q.queue}')
                     time.sleep(0.01)
         print('human: loop left')
 
@@ -159,7 +164,7 @@ class PlayerHuman(Player):
                         print(f'(Play) Other msg code: {msg}')
                         PlayerHuman.output_q.task_done()
                 except queue.Empty:
-                    print(f'human play: empty output_q: {PlayerHuman.output_q.queue}')
+                    # print(f'human play: empty output_q: {PlayerHuman.output_q.queue}')
                     time.sleep(0.05)
 
         # while not is_valid_input:

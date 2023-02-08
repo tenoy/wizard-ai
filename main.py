@@ -104,6 +104,9 @@ def process_simulation_event_queue():
             elif msg == "INVALID_CARD":
                 gui.invalid_card()
                 input_q.task_done()
+            elif msg == "INVALID_INPUT":
+                gui.invalid_input()
+                input_q.task_done()
             elif msg == "INVALID_BID":
                 gui.invalid_bid()
                 input_q.task_done()

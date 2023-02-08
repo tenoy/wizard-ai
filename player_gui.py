@@ -150,7 +150,7 @@ class PlayerGui:
         self.enter_bid_entry = None
         self.enter_bid_button = None
 
-        master.protocol("WM_DELETE_WINDOW", self.on_closing)
+        master.protocol("WM_DELETE_WINDOW", self.on_closing_root)
         self.show_game_options()
 
     def show_game_options(self):
@@ -257,8 +257,7 @@ class PlayerGui:
                 players_initial_order.append(PlayerComputerRollout(nr, 'computer', entry))
 
         self.state = State(players_initial_order, 1, Trick(), self.deck, {})
-        # threading.Thread(target=lambda: PlayerGui.process_simulation_event_queue(initial_state), name="Simulation Poll Thread", daemon=True).start()
-        # todo: either "restart" previous simulation thread or kill previous simulation thread
+
         if self.simulation_thread is not None:
             PlayerGui.output_q.put('GAME_RESTART')
             self.simulation_thread.join()
@@ -341,7 +340,7 @@ class PlayerGui:
         for card in human_player.current_hand:
             card_images_hand[card] = ImageTk.PhotoImage(card.card_image)
 
-        max_cards_per_row = 7
+        max_cards_per_row = 8
         current_row = 0
         current_col = 0
         for i in range(len(human_player.current_hand)):
@@ -418,33 +417,34 @@ class PlayerGui:
         messagebox.showinfo(message=f'Winning card: {winning_card} from {winning_player}')
 
     def enter_bid(self):
-        # todo: implement own custom dialog that can be destroyed when restarting game
-        # self.enter_bid_window = Tk()
-        # self.enter_bid_window.withdraw()
-        # new_win = Tk()
-        # new_win.withdraw()
-        # print('###enter_bid###')
+        if self.enter_bid_window is None:
+            x_pos = self.master.winfo_x()
+            y_pos = self.master.winfo_y()
+            self.enter_bid_window = Toplevel(self.master)
+            self.enter_bid_window.title('Enter Bid!')
+            self.enter_bid_window.geometry('200x100')
+            self.enter_bid_window.geometry("+%d+%d" % (x_pos + 550, y_pos + 550))
+            self.enter_bid_window.wm_transient(self.master)
+            self.enter_bid_window.bind('<Return>', self.input_bid)
 
-        self.enter_bid_window = Toplevel(self.master)
-        self.enter_bid_window.title('Enter Bid!')
-        self.enter_bid_window.geometry('200x100')
-        # input_val = 0
-        self.enter_bid_entry = Entry(self.enter_bid_window)
-        self.enter_bid_entry.pack(pady=10)
-        self.enter_bid_button = Button(self.enter_bid_window, text='Bid', command=self.input_bid)
-        self.enter_bid_button.pack(pady=10)
-        # input_val = simpledialog.askinteger(title='Input', prompt='Enter your bid', parent=self.enter_bid_window)
-        # print(f'Input value: {input_val}')
-        # new_win.destroy()
-        # self.enter_bid_window.destroy()
-        print(f'leaving enter bid')
-        # return input_val
+            self.enter_bid_entry = Entry(self.enter_bid_window)
+            self.enter_bid_entry.pack(pady=10)
+            self.enter_bid_button = Button(self.enter_bid_window, text='Bid', command=self.input_bid)
+            self.enter_bid_button.pack(pady=10)
+        else:
+            self.enter_bid_window.deiconify()
+            self.enter_bid_entry.delete(0, END)
+        self.enter_bid_entry.focus_force()
+        self.enter_bid_window.protocol("WM_DELETE_WINDOW", self.on_closing_bid)
 
-    def input_bid(self):
+    def input_bid(self, event=None):
+        print(f'input_bid')
         bid = self.enter_bid_entry.get()
         input_bid = ('INPUT_BID', bid)
         PlayerGui.output_q.put(input_bid)
-        self.enter_bid_window.destroy()
+        # self.enter_bid_window.destroy()
+        self.enter_bid_window.withdraw()
+
 
     @staticmethod
     def game_over(state):
@@ -460,10 +460,21 @@ class PlayerGui:
         return human_plr
 
     @staticmethod
-    def on_closing():
+    def on_closing_root():
         print('clicked on exit')
         print(threading.enumerate())
         sys.exit()
+
+    def on_closing_bid(self):
+        print('clicked on bid exit')
+        messagebox.showinfo(message='You need to input a bid!', title='Exit Bid')
+        self.enter_bid_entry.focus_force()
+        # self.enter_bid()
+
+    def on_closing_suit(self):
+        print('clicked on suit exit')
+        messagebox.showinfo(message='You need to select a suit!', title='Exit Suit')
+        self.select_suit_master.focus_force()
 
     def click_select_card(self, event):
         print("left click card")
@@ -481,11 +492,20 @@ class PlayerGui:
     def invalid_bid():
         messagebox.showinfo(message='With your bid the sum of bids equals the round number. The sum of bids is not allowed to match the round number.',title='Invalid Bid')
 
+    @staticmethod
+    def invalid_input():
+        messagebox.showinfo(message='Invalid input. Input must be a positive number.', title='Invalid Input')
+
     def select_suit(self):
         self.select_suit_master = Toplevel(self.master)
         self.select_suit_master.title('Select a Suit')
         self.select_suit_master.geometry('415x150')
         self.select_suit_master.configure(bg='green')
+        x_pos = self.master.winfo_x()
+        y_pos = self.master.winfo_y()
+        self.select_suit_master.geometry("+%d+%d" % (x_pos + 445, y_pos + 325))
+        self.select_suit_master.wm_transient(self.master)
+        self.select_suit_master.focus_force()
         col = 0
         for suit in Suit:
             if suit.name != 'JOKER':
@@ -494,6 +514,7 @@ class PlayerGui:
                 card_label.bind("<Button-1>", self.click_select_suit)
                 self.widget_suit_dict[card_label] = suit
                 col = col + 1
+        self.select_suit_master.protocol("WM_DELETE_WINDOW", self.on_closing_suit)
 
     def click_select_suit(self, event):
         print("left click suit")

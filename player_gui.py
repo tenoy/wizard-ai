@@ -145,7 +145,10 @@ class PlayerGui:
 
         self.state = None
         self.simulation_thread = None
+
         self.enter_bid_window = None
+        self.enter_bid_entry = None
+        self.enter_bid_button = None
 
         master.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.show_game_options()
@@ -416,20 +419,32 @@ class PlayerGui:
 
     def enter_bid(self):
         # todo: implement own custom dialog that can be destroyed when restarting game
-        self.enter_bid_window = Tk()
-        self.enter_bid_window.withdraw()
+        # self.enter_bid_window = Tk()
+        # self.enter_bid_window.withdraw()
         # new_win = Tk()
         # new_win.withdraw()
         # print('###enter_bid###')
 
-        # test_frame = Toplevel(self.enter_bid_window)
-        # test_frame.title('TEST')
-        # test_frame.geometry('600x400')
-        input_val = simpledialog.askinteger(title='Input', prompt='Enter your bid', parent=self.enter_bid_window)
-        print(f'Input value: {input_val}')
+        self.enter_bid_window = Toplevel(self.master)
+        self.enter_bid_window.title('Enter Bid!')
+        self.enter_bid_window.geometry('200x100')
+        # input_val = 0
+        self.enter_bid_entry = Entry(self.enter_bid_window)
+        self.enter_bid_entry.pack(pady=10)
+        self.enter_bid_button = Button(self.enter_bid_window, text='Bid', command=self.input_bid)
+        self.enter_bid_button.pack(pady=10)
+        # input_val = simpledialog.askinteger(title='Input', prompt='Enter your bid', parent=self.enter_bid_window)
+        # print(f'Input value: {input_val}')
         # new_win.destroy()
+        # self.enter_bid_window.destroy()
+        print(f'leaving enter bid')
+        # return input_val
+
+    def input_bid(self):
+        bid = self.enter_bid_entry.get()
+        input_bid = ('INPUT_BID', bid)
+        PlayerGui.output_q.put(input_bid)
         self.enter_bid_window.destroy()
-        return input_val
 
     @staticmethod
     def game_over(state):

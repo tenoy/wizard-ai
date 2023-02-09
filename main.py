@@ -97,7 +97,7 @@ def process_simulation_event_queue():
                 # output_q.put(input_bid)
                 # print(f'poll:  {input_q.queue}')
                 # print('poll: call join')
-                output_q.join()
+                # output_q.join()
             elif msg == "GAME_OVER":
                 gui.game_over()
                 input_q.task_done()

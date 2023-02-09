@@ -448,6 +448,7 @@ class PlayerGui:
         self.enter_bid_window.withdraw()
 
     def game_over(self):
+        print(f'############ Game Over')
         x_pos = self.master.winfo_x()
         y_pos = self.master.winfo_y()
         winning_player = max(self.state.players_deal_order, key=lambda x: x.current_score)

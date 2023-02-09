@@ -61,7 +61,7 @@ class PlayerHuman(Player):
             while not is_bid_input_received:
                 try:
                     # time.sleep(0.05)
-                    # print(f'human: call get bid from output q: {PlayerHuman.output_q.queue}')
+                    # print(f'human bid: call get bid from output q: {PlayerHuman.output_q.queue}')
                     msg = PlayerHuman.output_q.get(block=True, timeout=0.05)
                     if msg[0] == 'INPUT_BID':
                         human_input = msg[1]
@@ -139,6 +139,7 @@ class PlayerHuman(Player):
             is_card_input_received = False
             while not is_card_input_received:
                 try:
+                    # print(f'human play: get card from output_q: {PlayerHuman.output_q.queue}')
                     msg = PlayerHuman.output_q.get(block=True, timeout=0.05)
                     if msg[0] == 'INPUT_CARD':
                         selected_card = msg[1]
@@ -225,7 +226,7 @@ class PlayerHuman(Player):
                         print(f'(Select Suit) Other msg code: {msg}')
                         PlayerHuman.output_q.task_done()
                 except queue.Empty:
-                    print(f'human suit: empty output_q: {PlayerHuman.output_q.queue}')
+                    # print(f'human suit: empty output_q: {PlayerHuman.output_q.queue}')
                     time.sleep(0.05)
 
 

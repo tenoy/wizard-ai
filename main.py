@@ -1,13 +1,8 @@
 import queue
-import sys
-import textwrap
 import threading
 import time
 from collections import deque
-from tkinter import Tk, ttk, Label, Menu
-
-from PIL import ImageTk
-
+from tkinter import Tk
 from player_gui import PlayerGui
 from simulation import Simulation
 from card import Card
@@ -22,37 +17,6 @@ from policies.player_computer_weighted_random import PlayerComputerWeightedRando
 from state import State
 from trick import Trick
 import datetime
-
-
-# def get_human_player(state):
-#     human_plr = None
-#     for plr in state.players:
-#         if plr.player_type == 'human':
-#             human_plr = plr
-#     return human_plr
-#
-# global card_images_hand
-# card_images_hand = []
-
-# def update_hand():
-#     print('###update hand###')
-#     human_plr = get_human_player(s0)
-#     hand_group = ttk.LabelFrame(mainframe, text=f'Current hand {human_player}')
-#     hand_group.grid(padx=pad_x, pady=pad_y, row=2, column=0, columnspan=2)
-#     #card_images_hand = []
-#     for crd in human_plr.current_hand:
-#         card_images_hand.append(ImageTk.PhotoImage(crd.card_image))
-#     max_cards_per_row = 7
-#     current_row = 0
-#     current_col = 0
-#     for i2 in range(len(human_plr.current_hand)):
-#         if current_col >= max_cards_per_row:
-#             current_row = current_row + 1
-#             current_col = 0
-#         card_labl = Label(hand_group, text='', image=card_images_hand[i2])  # get image of card
-#         card_labl.grid(row=current_row, column=current_col)
-#         current_col = current_col + 1
-
 
 def process_simulation_event_queue():
     while True:
@@ -120,7 +84,7 @@ def process_simulation_event_queue():
 
 # program mode is either 'game' (with human player) or 'simulation' (only computers)
 global program_mode
-program_mode = 'game'
+program_mode = 'simulation'
 
 if program_mode == 'game':
     is_game_mode = True
@@ -148,9 +112,9 @@ for i in range(1, 5):
 if program_mode == 'simulation':
     timestamp_start = datetime.datetime.now()
 
-    for i in range(0, 1000):
+    for i in range(0, 10):
         players_initial_order = deque()
-        players_initial_order.append(PlayerComputerRandom(1, 'computer', "random"))
+        players_initial_order.append(PlayerComputerRollout(1, 'computer', "rollout"))
         players_initial_order.append(PlayerComputerWeightedRandom(2, 'computer', "weighted_random"))
         players_initial_order.append(PlayerComputerDynamicWeightedRandom(3, 'computer', "dynamic_weighted_random"))
         players_initial_order.append(PlayerComputerMyopic(4, 'computer', "heuristic"))
@@ -169,19 +133,6 @@ else:
     # input_q = alle nachrichten zum Simulation Poll Thread, ouput_q = alle nachrichten aus Simulation Poll Thread
     Simulation.input_q = input_q
     Simulation.output_q = output_q
-    # setup human player
-    human_player = PlayerHuman(1, 'human', player_name='Wizard Player', input_q=input_q, output_q=output_q)
-    # setup players
-    players_initial_order = deque()
-    players_initial_order.append(PlayerComputerRandom(1, 'computer', "random"))
-    players_initial_order.append(PlayerComputerWeightedRandom(2, 'computer', "weighted_random"))
-    players_initial_order.append(PlayerComputerDynamicWeightedRandom(3, 'computer', "dynamic_wr"))
-    players_initial_order.append(PlayerComputerMyopic(4, 'computer', "heuristic"))
-    players_initial_order.append(PlayerComputerRollout(5, 'computer', "rollout"))
-    # players_initial_order.append(human_player)
-    # setup state
-    number_of_rounds = int(60 / len(players_initial_order))
-    s0 = State(players_initial_order, 1, Trick(), deck, {})
     # setup gui
     root = Tk()
 

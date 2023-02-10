@@ -1,7 +1,5 @@
 from math import comb
-
-from PIL import Image, ImageTk
-
+from PIL import Image
 from enum_rank import Rank
 from enum_suit import Suit
 

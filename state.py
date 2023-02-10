@@ -1,7 +1,4 @@
-import copy
 from collections import deque
-
-from player import Player
 from player_computer import PlayerComputer
 from player_human import PlayerHuman
 from policies.player_computer_dynamic_weighted_random import PlayerComputerDynamicWeightedRandom

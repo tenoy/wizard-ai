@@ -1,8 +1,7 @@
 import sys
 import textwrap
 import threading
-from datetime import time
-from tkinter import Tk, ttk, messagebox, simpledialog, Toplevel, Label, Frame, Menu, Listbox, Button, END, Entry
+from tkinter import ttk, messagebox, Toplevel, Label, Frame, Menu, Listbox, Button, END, Entry
 from PIL import Image, ImageTk
 from enum_suit import Suit
 from player_human import PlayerHuman
@@ -47,6 +46,9 @@ class PlayerGui:
         master.title('Wizard AI')
         master.geometry("1300x800")
         master.configure(background="green")
+
+        self.x_pos = self.master.winfo_x()
+        self.y_pos = self.master.winfo_y()
 
         menu = Menu(master)
         master.config(menu=menu)
@@ -162,6 +164,7 @@ class PlayerGui:
         self.game_options_master = Toplevel(self.master)
         self.game_options_master.title('Game Options')
         self.game_options_master.geometry('600x400')
+        self.game_options_master.geometry("+%d+%d" % (self.x_pos + 350, self.y_pos + 200))
         # self.game_options_master.grab_set()
         self.game_options_master.focus_force()
 
@@ -420,12 +423,10 @@ class PlayerGui:
 
     def enter_bid(self):
         if self.enter_bid_window is None:
-            x_pos = self.master.winfo_x()
-            y_pos = self.master.winfo_y()
             self.enter_bid_window = Toplevel(self.master)
             self.enter_bid_window.title('Enter Bid!')
             self.enter_bid_window.geometry('200x100')
-            self.enter_bid_window.geometry("+%d+%d" % (x_pos + 550, y_pos + 550))
+            self.enter_bid_window.geometry("+%d+%d" % (self.x_pos + 550, self.y_pos + 550))
             self.enter_bid_window.wm_transient(self.master)
             self.enter_bid_window.bind('<Return>', self.input_bid)
 
@@ -449,13 +450,11 @@ class PlayerGui:
 
     def game_over(self):
         print(f'############ Game Over')
-        x_pos = self.master.winfo_x()
-        y_pos = self.master.winfo_y()
         winning_player = max(self.state.players_deal_order, key=lambda x: x.current_score)
         self.game_over_window = Toplevel(self.master)
         self.game_over_window.title('Game Over!')
         self.game_over_window.geometry('300x100')
-        self.game_over_window.geometry("+%d+%d" % (x_pos + 500, y_pos + 350))
+        self.game_over_window.geometry("+%d+%d" % (self.x_pos + 500, self.y_pos + 350))
         self.game_over_window.wm_transient(self.master)
         self.game_over_window.focus_force()
         game_over_mainframe = Frame(self.game_over_window)
@@ -524,9 +523,7 @@ class PlayerGui:
         self.select_suit_master.title('Select a Suit')
         self.select_suit_master.geometry('415x150')
         self.select_suit_master.configure(bg='green')
-        x_pos = self.master.winfo_x()
-        y_pos = self.master.winfo_y()
-        self.select_suit_master.geometry("+%d+%d" % (x_pos + 445, y_pos + 325))
+        self.select_suit_master.geometry("+%d+%d" % (self.x_pos + 445, self.y_pos + 325))
         self.select_suit_master.wm_transient(self.master)
         self.select_suit_master.focus_force()
         col = 0

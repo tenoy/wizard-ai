@@ -16,15 +16,15 @@ class Simulation(threading.Thread):
     def simulate_episode(state, rollout_player=None, human_player=None):
         players_deal_order = state.players_deal_order
         players_bid_order = state.players_bid_order
-        players_bid_order.rotate(-1)
         players_play_order = state.players_play_order
-        players_play_order.rotate(-2)
         max_number_of_rounds = int(60 / len(players_deal_order))
-
         # the number of rounds is different for rollout simulation instances
         if rollout_player is None:
             deck = list(state.deck)
             number_of_rounds = max_number_of_rounds
+            # in a normal state the order of players need to be set for each list
+            players_bid_order.rotate(-1)
+            players_play_order.rotate(-2)
         else:
             deck = [card for card in state.deck if card not in rollout_player.current_hand]
             number_of_rounds = state.round_nr
@@ -232,6 +232,7 @@ class Simulation(threading.Thread):
                 print(str(player) + ', Games won: ' + str(player.games_won))
 
         if rollout_player is None:
+            print(f'Game done')
             return player_final_scores
         else:
             return player_final_scores[rollout_player]

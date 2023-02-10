@@ -1,9 +1,4 @@
-import random
-
-from enum_rank import Rank
-from enum_suit import Suit
 from policies.player_computer_weighted_random import PlayerComputerWeightedRandom
-from trick import Trick
 
 
 # dynamic weighted random policy

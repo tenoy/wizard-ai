@@ -1,6 +1,5 @@
 import queue
 import sys
-import threading
 import time
 from enum_suit import Suit
 from player import Player

@@ -49,7 +49,7 @@ def process_simulation_event_queue():
                 gui.update_trick_winner()
                 input_q.task_done()
             elif msg == "ENTER_BID":
-                print('poll: call enter bid gui')
+                # print('poll: call enter bid gui')
                 gui.enter_bid()
                 # bid = root.after(0, gui.enter_bid)
                 # print(f'poll: bid value: {bid}')
@@ -84,7 +84,7 @@ def process_simulation_event_queue():
 
 # program mode is either 'game' (with human player) or 'simulation' (only computers)
 global program_mode
-program_mode = 'simulation'
+program_mode = 'game'
 
 if program_mode == 'game':
     is_game_mode = True

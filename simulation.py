@@ -67,13 +67,14 @@ class Simulation(threading.Thread):
 
             # Sample trump suit (except in last round)
             trump_suit = None
+            trump_card = None
             # players[0].pick_suit(state)
             if i < max_number_of_rounds:
                 trump_card = sampled_cards[len(sampled_cards) - 1]
                 if state.round_nr == i and rollout_player is not None:
+                    trump_card = state.trick.trump_card
                     trump_suit = state.trick.trump_suit
                 else:
-                    # trump_card = Card(Suit.JOKER, Rank.WIZARD) # for testing
                     trump_suit = trump_card.suit
                     if trump_suit == Suit.JOKER:
                         # if the dealer (i.e. player[0]) pulls a wizards as trump card, he might choose a trump suit
@@ -82,6 +83,7 @@ class Simulation(threading.Thread):
                             trump_suit = players_deal_order[0].pick_suit(state)
                         else:
                             trump_suit = None
+            state.trick.trump_card = trump_card
             state.trick.trump_suit = trump_suit
 
             # Place bids - the player after the dealer starts with bidding
@@ -90,8 +92,8 @@ class Simulation(threading.Thread):
                 Simulation.input_q.put('UPDATE_TRUMP')
                 Simulation.input_q.join()
                 Simulation.input_q.put('UPDATE_STATS')
-                print('simulation: waiting')
-                print(f'simulation: {Simulation.input_q.queue}')
+                # print('simulation: waiting')
+                # print(f'simulation: {Simulation.input_q.queue}')
                 Simulation.input_q.join()
 
             bids = {}
@@ -108,18 +110,18 @@ class Simulation(threading.Thread):
                 state.bids = bids
                 if human_player is not None:
                     Simulation.input_q.put('UPDATE_STATS')
-                    print('simulation: waiting')
-                    print(f'simulation: {Simulation.input_q.queue}')
+                    # print('simulation: waiting')
+                    # print(f'simulation: {Simulation.input_q.queue}')
                     Simulation.input_q.join()
                     Simulation.input_q.put('UPDATE_TRICK')
-                    print('simulation: waiting')
-                    print(f'simulation: {Simulation.input_q.queue}')
+                    # print('simulation: waiting')
+                    # print(f'simulation: {Simulation.input_q.queue}')
                     Simulation.input_q.join()
 
             # The player after the next player of the dealer starts the play
             # Each player plays a card one after another in each trick j of round i
             for j in range(0, i, 1):
-                trick = Trick(trump_suit=trump_suit, leading_suit=None, cards=[], played_by=[], trick_nr=j)
+                trick = Trick(trump_card=trump_card, trump_suit=trump_suit, leading_suit=None, cards=[], played_by=[], trick_nr=j)
                 state.trick = trick
                 if human_player is not None:
                     Simulation.input_q.put('UPDATE_TRICK')
@@ -153,6 +155,7 @@ class Simulation(threading.Thread):
                         rotate_by = len(players_play_order) - k
                 for player in players_play_order:
                     if player.player_type == 'human':
+                        print('Trump card: ' + str(trump_card))
                         print('Trump suit: ' + str(trump_suit))
                         print('Cards in trick: ', end=' ')
                         print(*trick.cards, sep=', ')

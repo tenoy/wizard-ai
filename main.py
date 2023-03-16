@@ -84,7 +84,7 @@ def process_simulation_event_queue():
 
 # program mode is either 'game' (with human player) or 'simulation' (only computers)
 global program_mode
-program_mode = 'game'
+program_mode = 'simulation'
 
 if program_mode == 'game':
     is_game_mode = True
@@ -118,7 +118,7 @@ if program_mode == 'simulation':
         players_initial_order.append(PlayerComputerWeightedRandom(2, 'computer', "weighted_random"))
         players_initial_order.append(PlayerComputerDynamicWeightedRandom(3, 'computer', "dynamic_weighted_random"))
         players_initial_order.append(PlayerComputerMyopic(4, 'computer', "heuristic"))
-        players_initial_order.append(PlayerComputerRollout(5, 'computer', "rollout"))
+        # players_initial_order.append(PlayerComputerRollout(5, 'computer', "rollout"))
         number_of_rounds = int(60 / len(players_initial_order))
         s0 = State(players_initial_order, 1, Trick(), deck, {})
         Simulation.simulate_episode(s0)

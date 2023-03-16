@@ -18,9 +18,7 @@ from trick import Trick
 
 # list/variable must be global due to bug in ImageTk
 
-# card_images_hand = {}
 card_images_suit = {}
-# card_images_trick = []
 card_image_empty = None
 card_images = {}
 
@@ -32,9 +30,6 @@ class PlayerGui:
 
     def __init__(self, master, deck, input_q, output_q):
 
-        print('###__init__###')
-        # self.initial_state = initial_state
-        # self.human_player = human_player
         PlayerGui.output_q = output_q
         PlayerGui.input_q = input_q
         self.deck = deck
@@ -83,7 +78,6 @@ class PlayerGui:
         self.stats_group_border.grid(padx=self.pad_x, pady=self.pad_y, row=1, column=0, sticky='N S')
         self.stats_group = ttk.LabelFrame(self.stats_group_border, text="Player Stats", style="Custom.TLabelframe")
         self.stats_group.pack(padx=2, pady=2, fill='y', expand=True)
-        # self.stats_group.grid(padx=2, pady=2, row=0, column=0, sticky='N S E W')
 
         # Generate card images via ImageTk and store in global list / dict
         # Special card images for chosen-suit (if dealer draw wizard as trump card)
@@ -109,19 +103,15 @@ class PlayerGui:
         self.trump_group_border.grid(padx=0, pady=self.pad_y, row=1, column=1, sticky='S N')
         self.trump_group = ttk.LabelFrame(self.trump_group_border, text="Trump Suit", style="Custom.TLabelframe")
         self.trump_group.pack(padx=2, pady=2, fill='y', expand=True)
-        # player_name_short = textwrap.shorten(str(initial_state.players_deal_order[0]), width=11, placeholder="...")
         self.trump_card_frame = ttk.LabelFrame(self.trump_group, style="Custom2.TLabelframe")
         self.trump_card_frame.pack()
-        # self.trump_group.grid(padx=2, pady=2, row=0, column=0, sticky='N S')
         self.trump_card = ttk.Label(self.trump_card_frame, image=card_image_empty, style="Custom3.TLabel")
         self.trump_card.pack()
 
         self.trick_group_border = ttk.Frame(self.mainframe, style="Custom2.TFrame")
         self.trick_group_border.grid(padx=self.pad_x, pady=self.pad_y, row=1, column=2, sticky='N S E W')
-        # self.trick_group_border.grid_propagate(False)
         self.trick_group = ttk.LabelFrame(self.trick_group_border, text='Trick Cards', style="Custom.TLabelframe")
         self.trick_group.pack(padx=2, pady=2, fill='both', expand=True)
-        # self.trick_group.grid(padx=2, pady=2, row=0, column=0, sticky='N S E W')
 
         player_name_label = ttk.Label(self.stats_group, text='Playername', style="Custom2.TLabel")
         player_name_label.grid(row=0, column=0, sticky='W', pady=self.pad_y)
@@ -175,7 +165,6 @@ class PlayerGui:
         self.game_options_master.title('Game Options')
         self.game_options_master.geometry('600x400')
         self.game_options_master.geometry("+%d+%d" % (self.x_pos + 350, self.y_pos + 200))
-        # self.game_options_master.grab_set()
         self.game_options_master.focus_force()
 
         mainframe_game_options = ttk.Frame(self.game_options_master, style="Custom.TFrame", relief='solid')
@@ -243,14 +232,9 @@ class PlayerGui:
             messagebox.showinfo(message=f'You have to add at least 2 players')
         else:
             self.setup_game()
-            # print(f'{self.master.state()}')
             self.master.deiconify()
-            # print(f'{self.master.state()}')
-            # print(f'{threading.enumerate()}')
 
     def setup_game(self):
-        print('setup_game')
-
         players_initial_order = list()
         self.human_player = PlayerHuman(1, 'human', player_name='Wizard Player', input_q=PlayerGui.input_q, output_q=PlayerGui.output_q)
         human_player_name = self.entry_human_player_name.get()
@@ -258,7 +242,6 @@ class PlayerGui:
         players_initial_order.append(self.human_player)
 
         for idx, entry in enumerate(self.selected_computer_list.get(0, END)):
-            print(f'{entry}')
             nr = idx+2
             if entry == 'Idiot':
                 players_initial_order.append(PlayerComputerRandom(nr, 'computer', entry))
@@ -281,13 +264,9 @@ class PlayerGui:
             PlayerGui.input_q.queue.clear()
         with PlayerGui.output_q.mutex:
             PlayerGui.output_q.queue.clear()
-        # print(f'Input q: {PlayerGui.input_q.queue}')
-        # print(f'Output q: {PlayerGui.output_q.queue}')
         self.simulation_thread.start()
 
-        # self.player_name_labels.clear()
         for i in range(len(self.player_name_labels)):
-            print('destroying old widgets')
             self.player_name_labels[i].destroy()
             self.player_bid_labels[i].destroy()
             self.player_tricks_won_labels[i].destroy()
@@ -328,11 +307,9 @@ class PlayerGui:
             player_name_short = textwrap.shorten(str(player), width=11, placeholder="...")
             card_frame = ttk.LabelFrame(self.trick_group, text=f'{player_name_short}', style="Custom2.TLabelframe")
             card_frame.grid(row=0, column=i, sticky='N S')
-            # card_frame.grid_rowconfigure(0, weight=1)
             self.trick_frames.append(card_frame)
             card_label = ttk.Label(self.trick_frames[i], image=card_image_empty, style="Custom3.TLabel")
             card_label.pack(fill='both', expand=True)
-            # card_label.grid(row=0, column=0, sticky='N S E W')
             self.trick_cards.append(card_label)
 
         # current hand (max number of cards can be 20 in wizard)
@@ -353,45 +330,17 @@ class PlayerGui:
 
     def update_hand(self):
         state = self.state
-        # print('###update hand###')
         # stores the card and the widget so that if a widget is clicked, the corresponding card can be obtained
         self.widget_card_dict.clear()
         human_player = self.get_human_player(state)
-        # if len(human_player.played_cards) == 0:
-        #     card_images_hand.clear()
-        # else:
-        #     for card in human_player.played_cards:
-        #         # print(f'delete card: {card}')
-        #         if card_images_hand.get(card) is not None:
-        #             del card_images_hand[card]
 
-        # self.hand_group = ttk.LabelFrame(self.mainframe, text=f'Current hand {human_player}')
-        # self.hand_group.grid(padx=self.pad_x, pady=self.pad_y, row=2, column=0, columnspan=2)
-        # card_images_hand = []
-        # for card in human_player.current_hand:
-        #     card_images_hand[card] = ImageTk.PhotoImage(card.card_image)
-
-        # max_cards_per_row = 8
-        # current_row = 0
-        # current_col = 0
         for i in range(len(human_player.current_hand)):
             card = human_player.current_hand[i]
-            # if current_col >= max_cards_per_row:
-            #     current_row = current_row + 1
-            #     current_col = 0
-            # card_label = ttk.Label(self.hand_group, text='', image=card_images_hand[card], style="Custom3.TLabel")  # get image of card
             self.current_hand_cards[i].configure(image=card_images[card], style="Custom3.TLabel")
-            # card_label.grid(row=current_row, column=current_col)
-            # card_label.bind("<Button-1>", self.click_select_card)
-            # card_label.bind("<Button-1>", lambda event: self.left_click(event))
             self.widget_card_dict[self.current_hand_cards[i]] = card
-            # current_col = current_col + 1
 
         for i in range(len(human_player.current_hand), 21):
-            # print(str(i))
             self.current_hand_cards[i].configure(image='', style="Custom3.TLabel")
-            # card_label.grid(row=current_row, column=current_col)
-            # current_col = current_col + 1
 
     def update_trump(self):
         state = self.state
@@ -421,27 +370,11 @@ class PlayerGui:
 
     def update_trick(self):
         state = self.state
-        # print('###update trick###')
-        # for widgets in self.trick_group.winfo_children():
-        #     widgets.destroy()
-        # print(f'card_images_size: {len(card_images_trick)}')
         for i in range(len(state.players_play_order)):
             player = state.players_play_order[i]
             player_name_short = textwrap.shorten(str(player), width=11, placeholder="...")
             self.trick_frames[i].configure(text=f'{player_name_short}', style="Custom2.TLabelframe")
             self.trick_cards[i].configure(image=card_image_empty, style="Custom3.TLabel")
-            # card_frame = ttk.LabelFrame(self.trick_group, text=f'{player_name_short}', width=110)
-
-        # start_index = len(card_images_trick)
-        # if start_index > len(state.trick.cards):
-        #     # print("###########################################delete all cards in trick")
-        #     card_images_trick.clear()
-        #
-        # for i in range(start_index, len(state.trick.cards)):
-        #     card_images_trick.append(ImageTk.PhotoImage(state.trick.cards[i].card_image))
-        #
-        # for i in range(len(state.trick.cards)):
-        #     self.trick_cards[i].configure(image=card_images_trick[i], style="Custom3.TLabel")
 
         for i in range(len(state.trick.cards)):
             self.trick_cards[i].configure(image=card_images[state.trick.cards[i]], style="Custom3.TLabel")
@@ -461,10 +394,9 @@ class PlayerGui:
             self.enter_bid_window = Toplevel(self.master)
             self.enter_bid_window.title('Enter Bid!')
             self.enter_bid_window.geometry('200x100')
-            self.enter_bid_window.geometry("+%d+%d" % (self.x_pos + 550, self.y_pos + 550))
+            self.enter_bid_window.geometry("+%d+%d" % (self.x_pos + self.master.winfo_width()/2, self.y_pos + self.master.winfo_height()/2))
             self.enter_bid_window.wm_transient(self.master)
             self.enter_bid_window.bind('<Return>', self.input_bid)
-
             self.enter_bid_entry = Entry(self.enter_bid_window)
             self.enter_bid_entry.pack(pady=10)
             self.enter_bid_button = Button(self.enter_bid_window, text='Bid', command=self.input_bid, height=1, width=6)
@@ -476,20 +408,17 @@ class PlayerGui:
         self.enter_bid_window.protocol("WM_DELETE_WINDOW", self.on_closing_bid)
 
     def input_bid(self, event=None):
-        # print(f'input_bid')
         bid = self.enter_bid_entry.get()
         input_bid = ('INPUT_BID', bid)
         PlayerGui.output_q.put(input_bid)
-        # self.enter_bid_window.destroy()
         self.enter_bid_window.withdraw()
 
     def game_over(self):
-        print(f'############ Game Over')
         winning_player = max(self.state.players_deal_order, key=lambda x: x.current_score)
         self.game_over_window = Toplevel(self.master)
         self.game_over_window.title('Game Over!')
         self.game_over_window.geometry('300x100')
-        self.game_over_window.geometry("+%d+%d" % (self.x_pos + 500, self.y_pos + 350))
+        self.game_over_window.geometry("+%d+%d" % (self.x_pos + self.master.winfo_width()/2, self.y_pos + self.master.winfo_height()/2))
         self.game_over_window.wm_transient(self.master)
         self.game_over_window.focus_force()
         game_over_mainframe = Frame(self.game_over_window)
@@ -502,7 +431,6 @@ class PlayerGui:
         exit_button.pack(padx=10, side='left')
         new_game_button = Button(buttons_frame, text='New Game', command=self.start_new_game, height=2, width=9)
         new_game_button.pack(padx=10, side='right')
-        # messagebox.showinfo(message=f'Winner: {winning_player} with {winning_player.current_score}', title='Game Over.')
 
     def start_new_game(self):
         self.game_over_window.destroy()
@@ -518,25 +446,18 @@ class PlayerGui:
 
     @staticmethod
     def on_closing_root():
-        print('clicked on exit')
-        # print(threading.enumerate())
         sys.exit()
 
     def on_closing_bid(self):
-        print('clicked on bid exit')
         messagebox.showinfo(message='You need to input a bid!', title='Exit Bid')
         self.enter_bid_entry.focus_force()
-        # self.enter_bid()
 
     def on_closing_suit(self):
-        print('clicked on suit exit')
         messagebox.showinfo(message='You need to select a suit!', title='Exit Suit')
         self.select_suit_master.focus_force()
 
     def click_select_card(self, event):
-        # print("left click card")
         caller = event.widget
-        print(caller)
         card = self.widget_card_dict.get(caller)
         input_card = ('INPUT_CARD', card)
         PlayerGui.output_q.put(input_card)
@@ -558,7 +479,7 @@ class PlayerGui:
         self.select_suit_master.title('Select a Suit')
         self.select_suit_master.geometry('415x150')
         self.select_suit_master.configure(bg='green')
-        self.select_suit_master.geometry("+%d+%d" % (self.x_pos + 445, self.y_pos + 325))
+        self.select_suit_master.geometry("+%d+%d" % (self.x_pos + self.master.winfo_width()/2, self.y_pos + self.master.winfo_height()/2))
         self.select_suit_master.wm_transient(self.master)
         self.select_suit_master.focus_force()
         col = 0
@@ -572,11 +493,8 @@ class PlayerGui:
         self.select_suit_master.protocol("WM_DELETE_WINDOW", self.on_closing_suit)
 
     def click_select_suit(self, event):
-        # print("left click suit")
         caller = event.widget
-        print(caller)
         suit = self.widget_suit_dict.get(caller)
-        print(suit)
         input_suit = ('INPUT_SUIT', suit)
         PlayerGui.output_q.put(input_suit)
         self.select_suit_master.destroy()

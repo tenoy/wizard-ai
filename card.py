@@ -113,13 +113,13 @@ class Card:
         n_turns_left_in_trick = n_players - len(trick.cards) - 1
         n_cards_drawable = 60 - n_cards_played - n_cards_hand
 
-        # case if this card is a wizard
+        # case if trick already contains wizard(s)
+        if len([card for card in trick.cards if card.rank == Rank.WIZARD]) > 0:
+            return 0
+
+        # case if this card is a wizard (and no other wizards are in the trick)
         if self.rank == Rank.WIZARD:
-            # if there is a wizard in trick already then there is no chance of winning, else it is a 100% win
-            if len([card for card in trick.cards if card.rank == Rank.WIZARD]):
-                return 0
-            else:
-                return 1
+            return 1
 
         # case if this card is a jester
         if self.rank == Rank.JESTER:
@@ -139,7 +139,7 @@ class Card:
             if len([card for card in trick.cards if card.suit == trick.trump_suit and card.rank > self.rank]) > 0:
                 return 0
             else:
-                # get all higher cards (trumps and wizards) that have been played
+                # get all higher cards (trumps and wizards) that have been played in previous rounds
                 higher_cards_played = [card for card in cards_played if (card.suit == trick.trump_suit or card.suit == Suit.JOKER) and card.rank > self.rank]
                 # get all higher cards (trumps and wizards) in hand that are allowed to play
                 higher_cards_hand = [card for card in cards_legal if (card.suit == trick.trump_suit or card.suit == Suit.JOKER) and card.rank > self.rank]

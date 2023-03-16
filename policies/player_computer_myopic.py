@@ -29,7 +29,23 @@ class PlayerComputerMyopic(PlayerComputerWeightedRandom):
                 probs_dict = self.build_static_probs_dict(cards=legal_cards, trump_suit=trick.trump_suit, players=players, win_prob=False)
         else:
             probs_dict = self.build_static_probs_dict(cards=legal_cards, trump_suit=trick.trump_suit, players=players, win_prob=False)
-        selected_card = max(probs_dict, key=probs_dict.get)
+        max_prob = max(probs_dict.values())
+        max_prob_cards = [card for card in probs_dict if probs_dict[card] == max_prob]
+        # selected_card = max(probs_dict, key=probs_dict.get)
+        # get the lowest rank card, that has maximum winning prob (i.e. win with the lowest card possible)
+        min_max_card = max_prob_cards[0]
+        for i in range(1, len(max_prob_cards)):
+            card = max_prob_cards[i]
+            if card.suit == min_max_card.suit:
+                if card.rank < min_max_card.rank:
+                    min_max_card = card
+            else:
+                if card.suit != trick.trump_suit and card.suit != trick.leading_suit:
+                    if card.rank < min_max_card.rank:
+                        min_max_card = card
+        selected_card = min_max_card
+        # selected_card = min(max_prob_cards)
+        print(f'Player_{self.number}, legal cards: {legal_cards}, probs: {probs_dict}, selected card: {selected_card}')
         return selected_card
 
     #trick, cards_played, cards_legal, current_hand, players

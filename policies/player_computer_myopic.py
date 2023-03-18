@@ -33,19 +33,10 @@ class PlayerComputerMyopic(PlayerComputerWeightedRandom):
         max_prob_cards = [card for card in probs_dict if probs_dict[card] == max_prob]
         # selected_card = max(probs_dict, key=probs_dict.get)
         # get the lowest rank card, that has maximum winning prob (i.e. win with the lowest card possible)
-        min_max_card = max_prob_cards[0]
-        for i in range(1, len(max_prob_cards)):
-            card = max_prob_cards[i]
-            if card.suit == min_max_card.suit:
-                if card.rank < min_max_card.rank:
-                    min_max_card = card
-            else:
-                if card.suit != trick.trump_suit and card.suit != trick.leading_suit:
-                    if card.rank < min_max_card.rank:
-                        min_max_card = card
+        min_max_card = self.get_min_max_card(max_prob_cards, trick)
         selected_card = min_max_card
         # selected_card = min(max_prob_cards)
-        print(f'Player_{self.number}, legal cards: {legal_cards}, probs: {probs_dict}, selected card: {selected_card}')
+        # print(f'Player_{self.number}, legal cards: {legal_cards}, probs: {probs_dict}, selected card: {selected_card}')
         return selected_card
 
     #trick, cards_played, cards_legal, current_hand, players
@@ -70,3 +61,36 @@ class PlayerComputerMyopic(PlayerComputerWeightedRandom):
             rnd_idx = random.randint(1, len(Suit) - 1)
             selected_suit = Suit(rnd_idx)
         return selected_suit
+
+    @staticmethod
+    def get_min_max_card(max_prob_cards, trick):
+        min_max_card = max_prob_cards[0]
+        for i in range(1, len(max_prob_cards)):
+            card = max_prob_cards[i]
+            # case if card has the same suit and possibly lower rank
+            if card.suit == min_max_card.suit:
+                if card.rank < min_max_card.rank:
+                    min_max_card = card
+            else:
+                # case if min_max card has JOKER suit (either wizard for winning or jester for loosing) then rather take another card to save joker cards
+                if min_max_card.suit == Suit.JOKER:
+                    min_max_card = card
+                # case if the min_max card is a trump card
+                elif min_max_card.suit == trick.trump_suit:
+                    # the other card must be non trump and non joker
+                    if card.suit != trick.trump_suit and card.suit != Suit.JOKER:
+                        min_max_card = card
+                # case if the min_max card is a leading_suit card
+                elif min_max_card.suit == trick.leading_suit:
+                    # the other card must be non trump, non leading_suit and non joker (this case shouldnt happen...)
+                    if card.suit != trick.trump_suit and card.suit != trick.leading_suit and card.suit != Suit.JOKER:
+                        min_max_card = card
+                # case if the min_max card is a normal card
+                else:
+                    # the other card must be non trump, non leading_suit and non joker
+                    if card.suit != trick.trump_suit and card.suit != trick.leading_suit and card.suit != Suit.JOKER:
+                        # and the rank must be lower
+                        if card.rank < min_max_card.rank:
+                            min_max_card = card
+
+        return min_max_card

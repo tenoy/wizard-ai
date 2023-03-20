@@ -111,20 +111,35 @@ for i in range(1, 5):
 
 if program_mode == 'simulation':
     timestamp_start = datetime.datetime.now()
-
-    for i in range(0, 10):
+    result_list = []
+    win_count_player = {}
+    for i in range(0, 100):
         players_initial_order = deque()
-        players_initial_order.append(PlayerComputerRollout(1, 'computer', "rollout"))
+        # players_initial_order.append(PlayerComputerRollout(1, 'computer', "rollout"))
+        players_initial_order.append(PlayerComputerWeightedRandom(1, 'computer', "random"))
         players_initial_order.append(PlayerComputerWeightedRandom(2, 'computer', "weighted_random"))
         players_initial_order.append(PlayerComputerDynamicWeightedRandom(3, 'computer', "dynamic_weighted_random"))
         players_initial_order.append(PlayerComputerMyopic(4, 'computer', "heuristic"))
-        # players_initial_order.append(PlayerComputerRollout(5, 'computer', "rollout"))
-        number_of_rounds = int(60 / len(players_initial_order))
+        players_initial_order.append(PlayerComputerRollout(5, 'computer', "rollout"))
+
         s0 = State(players_initial_order, 1, Trick(), deck, {})
-        Simulation.simulate_episode(s0)
+        result = Simulation.simulate_episode(s0)
+        result_list.append(result)
+        print(f'Game {i} done')
+
+    for result_tuple in result_list:
+        if result_tuple[1] in win_count_player:
+            win_count_player[result_tuple[1]] += 1
+        else:
+            win_count_player[result_tuple[1]] = 1
+
+    for key, value in win_count_player.items():
+        print(f"{key}: {value}")
+
     timestamp_end = datetime.datetime.now()
     delta = timestamp_end - timestamp_start
-    print(f"Time difference is {delta.total_seconds()} seconds")
+    delta_str = str(delta).split('.')[0]
+    print(f"Time difference is {delta_str}")
     print('done')
 else:
     # Queues für Duplex Nachrichtenaustausch zwischen main, simulation, player_gui und player_human

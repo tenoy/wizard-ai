@@ -219,7 +219,7 @@ class Simulation(threading.Thread):
         highest_score_player = None
         player_final_scores = {}
         for player in players_deal_order:
-            player_final_scores[player] = player.current_score
+            player_final_scores[str(player)] = player.current_score
             if player.current_score > highest_score:
                 highest_score = player.current_score
                 highest_score_player = player
@@ -231,11 +231,11 @@ class Simulation(threading.Thread):
             player.current_score = 0
         if rollout_player is None:
             highest_score_player.games_won = highest_score_player.games_won + 1
-            for player in state.players_deal_order:
-                print(str(player) + ', Games won: ' + str(player.games_won))
+            # for player in state.players_deal_order:
+                # print(str(player) + ', Games won: ' + str(player.games_won))
 
         if rollout_player is None:
-            print(f'Game done')
-            return player_final_scores
+            # print(f'Game {} done')
+            return player_final_scores, str(highest_score_player)
         else:
-            return player_final_scores[rollout_player]
+            return player_final_scores[str(rollout_player)]

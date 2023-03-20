@@ -1,6 +1,8 @@
 import statistics
 from collections import deque
 
+from joblib import Parallel, delayed
+
 from player_human import PlayerHuman
 from simulation import Simulation
 from policies.player_computer_myopic import PlayerComputerMyopic
@@ -12,7 +14,7 @@ class PlayerComputerRollout(PlayerComputerMyopic):
     def calculate_bid(self, state):
         # the original state must be copied and manipulated so that no rollout / human player are in the rollout state
         state_rollout_template = PlayerComputerRollout.generate_template_rollout_state(state)
-
+        # with Parallel(n_jobs=8) as parallel:
         bid_avg_score_dict = {}
         #bid_stdev_score_dict = {}
         #bid_median_score_dict = {}
@@ -24,20 +26,35 @@ class PlayerComputerRollout(PlayerComputerMyopic):
                 if plr.number == self.number:
                     base_policy_player_pos = i
             # simulate n times and store score
-            bid_scores = []
-            for i in range(0, 128, 1):
-                # create copy of the template rollout state
-                state_rollout = State(state_rollout_template.players_deal_order, state_rollout_template.round_nr, state_rollout_template.trick, state_rollout_template.deck, state_rollout_template.bids, state_rollout_template.players_bid_order, state_rollout_template.players_play_order)
-                # get base policy player from copied state
-                base_policy_player = state_rollout.players_deal_order[base_policy_player_pos]
-                base_policy_player.current_bid = bid
-                # Simulate
-                bid_scores.append(Simulation.simulate_episode(state_rollout, base_policy_player))
+            # bid_scores = []
+            bid_scores = Parallel(n_jobs=8)(delayed(self.sample_rollout_simulation)(state_rollout_template, base_policy_player_pos, bid) for i in range(0, 128))
+            # for i in range(0, 128, 1):
+            #     # create copy of the template rollout state
+            #     state_rollout = State(state_rollout_template.players_deal_order, state_rollout_template.round_nr, state_rollout_template.trick, state_rollout_template.deck, state_rollout_template.bids, state_rollout_template.players_bid_order, state_rollout_template.players_play_order)
+            #     # get base policy player from copied state
+            #     base_policy_player = state_rollout.players_deal_order[base_policy_player_pos]
+            #     base_policy_player.current_bid = bid
+            #     # Simulate
+            #     bid_scores.append(Simulation.simulate_episode(state_rollout, base_policy_player))
             bid_avg_score_dict[bid] = statistics.mean(bid_scores)
             #bid_stdev_score_dict[bid] = statistics.stdev(bid_scores)
             #bid_median_score_dict[bid] = statistics.median(bid_scores)
         max_avg_bid = max(bid_avg_score_dict, key=bid_avg_score_dict.get)
         return max_avg_bid
+
+    @staticmethod
+    def sample_rollout_simulation(state_rollout_template, base_policy_player_pos, bid):
+        # create copy of the template rollout state
+        state_rollout = State(state_rollout_template.players_deal_order, state_rollout_template.round_nr,
+                              state_rollout_template.trick, state_rollout_template.deck,
+                              state_rollout_template.bids, state_rollout_template.players_bid_order,
+                              state_rollout_template.players_play_order)
+        # get base policy player from copied state
+        base_policy_player = state_rollout.players_deal_order[base_policy_player_pos]
+        base_policy_player.current_bid = bid
+        # Simulate
+        result = Simulation.simulate_episode(state_rollout, base_policy_player)
+        return result
 
     @staticmethod
     def generate_template_rollout_state(state):

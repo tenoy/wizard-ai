@@ -31,7 +31,7 @@ class State:
         if players_play_order is not None:
             self.players_play_order.rotate(rotate_players_play_order)
         self.round_nr = round_nr
-        self.trick = Trick(trump_suit=trick.trump_suit, leading_suit=trick.leading_suit, cards=list(trick.cards), played_by=list(trick.played_by))
+        self.trick = Trick(trump_suit=trick.trump_suit, trump_card=trick.trump_card, leading_suit=trick.leading_suit, cards=list(trick.cards), played_by=list(trick.played_by))
         self.deck = list(deck)
         self.bids = dict(bids)
 

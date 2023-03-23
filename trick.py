@@ -3,12 +3,13 @@ from enum_rank import Rank
 
 class Trick:
 
-    def __init__(self, trump_card=None, trump_suit=None, leading_suit=None, cards=[], played_by=[], trick_nr=None):
+    def __init__(self, trump_card=None, trump_suit=None, leading_suit=None, cards=[], played_by=[], round_nr=None, trick_nr=None):
         self.trump_card = trump_card
         self.trump_suit = trump_suit
         self.leading_suit = leading_suit
         self.cards = cards
         self.played_by = played_by
+        self.round_nr = round_nr
         self.trick_nr = trick_nr
 
     def add_card(self, card, player):

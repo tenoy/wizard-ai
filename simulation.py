@@ -121,7 +121,7 @@ class Simulation(threading.Thread):
             # The player after the next player of the dealer starts the play
             # Each player plays a card one after another in each trick j of round i
             for j in range(0, i, 1):
-                trick = Trick(trump_card=trump_card, trump_suit=trump_suit, leading_suit=None, cards=[], played_by=[], trick_nr=j)
+                trick = Trick(trump_card=trump_card, trump_suit=trump_suit, leading_suit=None, cards=[], played_by=[], round_nr=i, trick_nr=j)
                 state.trick = trick
                 if human_player is not None:
                     Simulation.input_q.put('UPDATE_TRICK')
@@ -197,6 +197,8 @@ class Simulation(threading.Thread):
             players_play_order = deque(players_deal_order)
             state.players_play_order = players_play_order
             players_play_order.rotate(-2)
+            trick = Trick(trump_suit=None, leading_suit=None, cards=[], played_by=[])
+            state.trick = Trick(trump_suit=None, leading_suit=None, cards=[], played_by=[])
 
             if rollout_player is None:
                 state.round_nr = i + 1
@@ -204,7 +206,7 @@ class Simulation(threading.Thread):
                     print('Round ' + str(i) + ' done')
                     print('#############################################################')
             if human_player is not None:
-                state.trick = Trick(trump_suit=trump_suit, leading_suit=None, cards=[], played_by=[])
+                # state.trick = Trick(trump_suit=trump_suit, leading_suit=None, cards=[], played_by=[])
                 Simulation.input_q.put('UPDATE_TRICK')
                 Simulation.input_q.join()
 

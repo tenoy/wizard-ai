@@ -12,7 +12,7 @@ class PlayerComputerWeightedRandom(PlayerComputer):
         bid = 0
         for card in self.current_hand:
             rnd = random.uniform(0, 1)
-            prob = card.calc_static_win_prob(self.current_hand, state.trick.trump_suit, state.players_deal_order)
+            prob = card.calc_static_win_prob(self.current_hand, state.trick.trump_card, state.players_play_order)
             if rnd <= prob:
                 bid = bid + 1
 
@@ -25,25 +25,25 @@ class PlayerComputerWeightedRandom(PlayerComputer):
             bid = bid + random.randint(-1, 1)
         return bid
 
-    def select_card(self, trick=None, bids=None, legal_cards=None, current_hand=None, played_cards=None, players=None):
+    def select_card(self, state, legal_cards, played_cards=None):
         selected_card = None
-        probs_dict = self.build_static_probs_interval_dict(cards=legal_cards, trump_suit=trick.trump_suit, players=players)
+        probs_dict = self.build_static_probs_interval_dict(cards=legal_cards, trump_card=state.trick.trump_card, players=state.players_play_order)
         prob_sum = 0
         for v in probs_dict.values():
             prob_sum = prob_sum + v[1]
         if prob_sum == 0:
-            probs_dict = self.build_static_probs_interval_dict(cards=legal_cards, trump_suit=trick.trump_suit, players=players, win_prob=False)
+            probs_dict = self.build_static_probs_interval_dict(cards=legal_cards, trump_card=state.trick.trump_card, players=state.players_play_order, win_prob=False)
         selected_card = self.select_card_in_static_probs_interval_dict(probs_dict)
         if selected_card is None:
             raise Exception('No card selected. A card must be selected. Exiting.')
         return selected_card
 
-    def build_static_probs_interval_dict(self, cards, trump_suit, players, win_prob=True):
+    def build_static_probs_interval_dict(self, cards, trump_card, players, win_prob=True):
         # build 'probability intervals' whose size correspond to their 'probability'
         interval = 0
         probs_dict = {}
         for card in cards:
-            prob = card.calc_static_win_prob(self.current_hand, trump_suit, players)
+            prob = card.calc_static_win_prob(self.current_hand, trump_card, players)
             if not win_prob:
                 prob = 1 - prob
             probs_dict[card] = (interval, interval + prob)

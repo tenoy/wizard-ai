@@ -12,7 +12,7 @@ class PlayerComputerRandom(PlayerComputer):
     def recalculate_bid(self, state, bid):
         return self.calculate_bid(state)
 
-    def select_card(self, trick, bids, legal_cards, current_hand, played_cards, players):
+    def select_card(self, state, legal_cards, played_cards=None):
         card_idx = random.randint(0, len(legal_cards)-1)
         selected_card = legal_cards[card_idx]
         return selected_card

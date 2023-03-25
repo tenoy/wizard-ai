@@ -84,7 +84,7 @@ def process_simulation_event_queue():
 
 # program mode is either 'game' (with human player) or 'simulation' (only computers)
 global program_mode
-program_mode = 'simulation'
+program_mode = 'game'
 
 if program_mode == 'game':
     is_game_mode = True
@@ -116,7 +116,7 @@ if program_mode == 'simulation':
     for i in range(0, 100):
         players_initial_order = deque()
         # players_initial_order.append(PlayerComputerRollout(1, 'computer', "rollout"))
-        players_initial_order.append(PlayerComputerWeightedRandom(1, 'computer', "random"))
+        players_initial_order.append(PlayerComputerRandom(1, 'computer', "random"))
         players_initial_order.append(PlayerComputerWeightedRandom(2, 'computer', "weighted_random"))
         players_initial_order.append(PlayerComputerDynamicWeightedRandom(3, 'computer', "dynamic_weighted_random"))
         players_initial_order.append(PlayerComputerMyopic(4, 'computer', "heuristic"))

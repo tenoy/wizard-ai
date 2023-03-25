@@ -17,9 +17,10 @@ class PlayerComputer(Player):
 
         return bid
 
-    def play(self, trick, bids):
-        legal_cards = self.get_legal_cards(trick.leading_suit)
-        selected_card = self.select_card(trick=trick, bids=bids, legal_cards=legal_cards, current_hand=self.current_hand, played_cards=self.get_played_cards(bids.keys()), players=bids.keys())
+    def play(self, state):
+        legal_cards = self.get_legal_cards(state.trick.leading_suit)
+        # selected_card = self.select_card(trick=trick, bids=bids, legal_cards=legal_cards, current_hand=self.current_hand, played_cards=self.get_played_cards(bids.keys()), players=bids.keys())
+        selected_card = self.select_card(state, legal_cards=legal_cards, played_cards=self.get_played_cards(state.players_play_order))
 
         if selected_card is None:
             raise Exception('No card selected. A card must be selected. Exiting.')
@@ -36,19 +37,19 @@ class PlayerComputer(Player):
         return selected_suit
 
     @abstractmethod
-    def select_card(self):
+    def select_card(self, state, legal_cards, played_cards=None):
         pass
 
     @abstractmethod
-    def calculate_bid(self):
+    def calculate_bid(self, state):
         pass
 
     @abstractmethod
-    def recalculate_bid(self):
+    def recalculate_bid(self, state, bid):
         pass
 
     @abstractmethod
-    def select_suit(self):
+    def select_suit(self, state):
         pass
 
     def get_legal_cards(self, leading_suit):

@@ -34,6 +34,7 @@ class State:
         self.trick = Trick(trump_suit=trick.trump_suit, trump_card=trick.trump_card, leading_suit=trick.leading_suit, cards=list(trick.cards), played_by=list(trick.played_by))
         self.deck = list(deck)
         self.bids = dict(bids)
+        self.played_cards = []
 
     @staticmethod
     def get_player_class(player):

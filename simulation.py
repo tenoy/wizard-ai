@@ -27,6 +27,8 @@ class Simulation(threading.Thread):
             players_play_order.rotate(-2)
         else:
             deck = [card for card in state.deck if card not in rollout_player.current_hand]
+            if state.trick.trump_card is not None:
+                deck.remove(state.trick.trump_card)
             number_of_rounds = state.round_nr
 
         # simulate rounds from round_nr to min of number of rounds or max number of rounds
@@ -70,11 +72,11 @@ class Simulation(threading.Thread):
             trump_card = None
             # players[0].pick_suit(state)
             if i < max_number_of_rounds:
-                trump_card = sampled_cards[len(sampled_cards) - 1]
                 if state.round_nr == i and rollout_player is not None:
                     trump_card = state.trick.trump_card
                     trump_suit = state.trick.trump_suit
                 else:
+                    trump_card = sampled_cards[len(sampled_cards) - 1]
                     trump_suit = trump_card.suit
                     if trump_suit == Suit.JOKER:
                         # if the dealer (i.e. player[0]) pulls a wizards as trump card, he might choose a trump suit
@@ -129,7 +131,7 @@ class Simulation(threading.Thread):
                     Simulation.input_q.put('UPDATE_STATS')
                     Simulation.input_q.join()
                 for player in players_play_order:
-                    played_card = player.play(trick, bids)
+                    played_card = player.play(state)
                     trick.add_card(played_card, player)
                     if trick.leading_suit is None:
                         trick.leading_suit = trick.get_leading_suit()

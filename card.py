@@ -50,14 +50,25 @@ class Card:
 
     # Calculates static a-priori probability for this card being the winning card
     # Therefore the (counter)probability of drawing a higher card is calculated
-    def calc_static_win_prob(self, current_hand, trump_suit, players):
+    # Used mostly in bidding phase since only current hand
+    def calc_static_win_prob(self, current_hand, trump_card, players):
+        if trump_card is not None:
+            trump_suit = trump_card.suit
+            n_trump_card = 1
+        else:
+            trump_suit = None
+            n_trump_card = 0
         n_cards_hand = len(current_hand)
         n_players = len(players)
-        n_cards_drawable = 60 - n_cards_hand
+        n_cards_drawable = 60 - n_cards_hand - n_trump_card # the trump card is also not drawable (except in last round)
 
         if self.rank == Rank.WIZARD:
             n_wizards_in_hand = len([card for card in current_hand if card.rank == Rank.WIZARD])
             n_wizards_drawable = 4 - n_wizards_in_hand
+            if trump_card is not None:
+                if trump_card.rank == Rank.WIZARD:
+                    n_wizards_drawable = n_wizards_drawable - 1
+            # get probability that 0 wizard cards are played before own wizard
             prob = self.calc_hypergeometric_prob(M=n_wizards_drawable, k=0, N=n_cards_drawable, n=n_players-1)
             return prob
 
@@ -66,6 +77,8 @@ class Card:
                 prob = 0
             else:
                 n_jesters_in_hand = len([card for card in current_hand if card.rank == Rank.JESTER])
+                # it is not possible to win in all possible constellations of number of players and number of jesters in hand if the sum is above 5
+                # if e.g. 2 jesters are in the current hand and the number of players is 4, then its not possible to win
                 if n_jesters_in_hand + n_players > 5:
                     prob = 0
                 else:
@@ -78,6 +91,8 @@ class Card:
         if self.suit == trump_suit:
             n_higher_cards_hand = len([card for card in current_hand if(card.suit == trump_suit or card.suit == Suit.JOKER) and card.rank > self.rank])
             n_higher_cards = 4 + Rank.ACE - self.rank - n_higher_cards_hand
+            if trump_card.rank > self.rank:
+                n_higher_cards = n_higher_cards - 1
             # get probability that 0 higher cards are played -> that is the win prob of this card
             prob = self.calc_hypergeometric_prob(M=n_higher_cards, k=0, N=n_cards_drawable, n=n_players-1)
             return prob
@@ -89,9 +104,12 @@ class Card:
             if trump_suit is None:
                 n_trump_cards = 0
             else:
-                n_trump_cards = 13
-            # In 25% of the cases the card will match the leading suit
-            n_higher_cards = 4 + Rank.ACE - self.rank + n_trump_cards - n_higher_cards_hand
+                if trump_card.rank == Rank.WIZARD:
+                    n_trump_cards = 13 #no trump card is drawn from drawable
+                else:
+                    n_trump_cards = 12 #one less trump card since it was drawn for the trump card
+            # In 25% of the cases the card will match the leading suit, + 1 for the trump card
+            n_higher_cards = 4 + Rank.ACE - self.rank + n_trump_cards - n_higher_cards_hand + 1
             prob_leading_suit = self.calc_hypergeometric_prob(M=n_higher_cards, k=0, N=n_cards_drawable, n=n_players-1)
             # In 75% of the cases the card will not match the leading suit
             # If there is no trump suit get all higher card of the other suits
@@ -179,10 +197,12 @@ class Card:
     # Use hypergeometric distribution formula: P(X=k) = ((M over k) * (N - M over n - k)) / (N over n)
     # N = number of cards drawable, M = Number of higher cards, n = turns left in trick, k = exact number of times a card should be drawn
     # Example for winning with a jester in a 3 player game:
-    # N=59 (no cards played yet),  M=3 (3 Jesters left in deck), n=2 (2 turns to play), k=2 (both must play jester)
+    # N=58 (no cards played yet),  M=3 (3 Jesters left in deck), n=2 (2 turns to play), k=2 (both must play jester)
     # Example for ACE HEARTS trump card in a 3 player game:
-    # N=59, M=4 (only the wizards can beat a trump ace), n=2 (2 turns to play), k=0 (both must NOT play a wizard)
+    # N=58, M=4 (only the wizards can beat a trump ace), n=2 (2 turns to play), k=0 (both must NOT play a wizard)
     # https://studyflix.de/statistik/ziehen-ohne-zuruecklegen-1077
     def calc_hypergeometric_prob(self, M: int, k: int, N: int, n: int) -> float:
+        if M < 0 or k < 0 or N < 0 or n < 0:
+            print(f'M={M}, k={k}, N={N}, n={n}')
         prob = comb(M, k) * comb(N - M, n - k) / comb(N, n)
         return prob

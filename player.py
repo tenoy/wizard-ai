@@ -61,15 +61,15 @@ class Player:
                 return True
 
     @abstractmethod
-    def make_bid(self):
+    def make_bid(self, state):
         pass
 
     @abstractmethod
-    def play(self):
+    def play(self, state):
         pass
 
     @abstractmethod
-    def pick_suit(self):
+    def pick_suit(self, state):
         pass
 
     def __str__(self):

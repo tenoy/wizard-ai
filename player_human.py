@@ -108,15 +108,15 @@ class PlayerHuman(Player):
         # print(f'return value: {bid}')
         return bid
 
-    def play(self, trick, bids):
+    def play(self, state):
         selected_card = None
         idx = -1
         print('Bids: ', end=' ')
-        print(*bids.items())
-        print('Trump card: ' + str(trick.trump_card))
-        print('Trump suit: ' + str(trick.trump_suit))
+        print(*state.bids.items())
+        print('Trump card: ' + str(state.trick.trump_card))
+        print('Trump suit: ' + str(state.trick.trump_suit))
         print('Cards in trick:', end=' ')
-        print(*trick.cards, sep=', ')
+        print(*state.trick.cards, sep=', ')
         self.print_current_hand()
 
         is_valid_input = False
@@ -129,7 +129,7 @@ class PlayerHuman(Player):
                     if msg[0] == 'INPUT_CARD':
                         selected_card = msg[1]
                         is_card_input_received = True
-                        if self.is_valid_card(selected_card, trick.leading_suit):
+                        if self.is_valid_card(selected_card, state.trick.leading_suit):
                             self.played_cards.appendleft(selected_card)
                             self.current_hand.remove(selected_card)
                             is_valid_input = True

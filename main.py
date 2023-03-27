@@ -84,7 +84,7 @@ def process_simulation_event_queue():
 
 # program mode is either 'game' (with human player) or 'simulation' (only computers)
 global program_mode
-program_mode = 'game'
+program_mode = 'simulation'
 
 if program_mode == 'game':
     is_game_mode = True

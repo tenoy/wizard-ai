@@ -12,7 +12,7 @@ class PlayerComputerWeightedRandom(PlayerComputer):
         bid = 0
         for card in self.current_hand:
             rnd = random.uniform(0, 1)
-            prob = card.calc_static_win_prob(self.current_hand, state.trick.trump_card, state.players_play_order)
+            prob = card.calc_static_win_prob(self.current_hand, state.trick.trump_card, state.players_play_order, self)
             if rnd <= prob:
                 bid = bid + 1
 
@@ -43,7 +43,7 @@ class PlayerComputerWeightedRandom(PlayerComputer):
         interval = 0
         probs_dict = {}
         for card in cards:
-            prob = card.calc_static_win_prob(self.current_hand, trump_card, players)
+            prob = card.calc_static_win_prob(self.current_hand, trump_card, players, self)
             if not win_prob:
                 prob = 1 - prob
             probs_dict[card] = (interval, interval + prob)

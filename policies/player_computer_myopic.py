@@ -12,7 +12,7 @@ class PlayerComputerMyopic(PlayerComputerWeightedRandom):
             if card.rank == Rank.WIZARD:
                 bid = bid + 1
             else:
-                prob = card.calc_static_win_prob(current_hand=self.current_hand, trump_card=state.trick.trump_card, players=state.players_deal_order)
+                prob = card.calc_static_win_prob(current_hand=self.current_hand, trump_card=state.trick.trump_card, players=state.players_play_order, player=self)
                 if prob >= 0.5:
                     bid = bid + 1
         return bid
@@ -43,7 +43,7 @@ class PlayerComputerMyopic(PlayerComputerWeightedRandom):
     def build_static_probs_dict(self, cards, trump_card, players, win_prob=True):
         probs_dict = {}
         for card in cards:
-            prob = card.calc_static_win_prob(self.current_hand, trump_card, players)
+            prob = card.calc_static_win_prob(self.current_hand, trump_card, players, self)
             if not win_prob:
                 prob = 1 - prob
             probs_dict[card] = prob

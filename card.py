@@ -50,8 +50,13 @@ class Card:
 
     # Calculates static a-priori probability for this card being the winning card
     # Therefore the (counter)probability of drawing a higher card is calculated
-    # Used mostly in bidding phase since only current hand
-    def calc_static_win_prob(self, current_hand, trump_card, players):
+    # Used mostly in bidding phase since only current hand and trump card is known
+    def calc_static_win_prob(self, current_hand, trump_card, players, player):
+        pos = -1
+        for i in range(0, len(players)):
+            if players[i] == player:
+                pos = i
+
         if trump_card is not None:
             trump_suit = trump_card.suit
             n_trump_card = 1
@@ -68,8 +73,9 @@ class Card:
             if trump_card is not None:
                 if trump_card.rank == Rank.WIZARD:
                     n_wizards_drawable = n_wizards_drawable - 1
+            n_wizards_before = min(pos, n_wizards_drawable)
             # get probability that 0 wizard cards are played before own wizard
-            prob = self.calc_hypergeometric_prob(M=n_wizards_drawable, k=0, N=n_cards_drawable, n=n_players-1)
+            prob = self.calc_hypergeometric_prob(M=n_wizards_before, k=0, N=n_cards_drawable, n=n_players-1)
             return prob
 
         if self.rank == Rank.JESTER:

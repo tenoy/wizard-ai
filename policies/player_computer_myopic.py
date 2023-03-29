@@ -12,7 +12,7 @@ class PlayerComputerMyopic(PlayerComputerWeightedRandom):
             if card.rank == Rank.WIZARD:
                 bid = bid + 1
             else:
-                prob = card.calc_static_win_prob(current_hand=self.current_hand, trump_card=state.trick.trump_card, players=state.players_play_order, player=self)
+                prob = card.calc_static_win_prob(trick=state.trick, current_hand=self.current_hand, players=state.players_play_order, player=self)
                 if prob >= 0.5:
                     bid = bid + 1
         return bid
@@ -26,9 +26,9 @@ class PlayerComputerMyopic(PlayerComputerWeightedRandom):
             for v in probs_dict.values():
                 prob_sum = prob_sum + v
             if prob_sum == 0:
-                probs_dict = self.build_static_probs_dict(cards=legal_cards, trump_card=state.trick.trump_card, players=state.players_play_order, win_prob=False)
+                probs_dict = self.build_static_probs_dict(trick=state.trick, cards=legal_cards, players=state.players_play_order, win_prob=False)
         else:
-            probs_dict = self.build_static_probs_dict(cards=legal_cards, trump_card=state.trick.trump_card, players=state.players_play_order, win_prob=False)
+            probs_dict = self.build_static_probs_dict(trick=state.trick, cards=legal_cards, players=state.players_play_order, win_prob=False)
         max_prob = max(probs_dict.values())
         max_prob_cards = [card for card in probs_dict if probs_dict[card] == max_prob]
         # selected_card = max(probs_dict, key=probs_dict.get)
@@ -40,10 +40,10 @@ class PlayerComputerMyopic(PlayerComputerWeightedRandom):
         return selected_card
 
     #trick, cards_played, cards_legal, current_hand, players
-    def build_static_probs_dict(self, cards, trump_card, players, win_prob=True):
+    def build_static_probs_dict(self, trick, cards, players, win_prob=True):
         probs_dict = {}
         for card in cards:
-            prob = card.calc_static_win_prob(self.current_hand, trump_card, players, self)
+            prob = card.calc_static_win_prob(trick, self.current_hand, players, self)
             if not win_prob:
                 prob = 1 - prob
             probs_dict[card] = prob

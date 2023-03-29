@@ -11,6 +11,7 @@ class Player:
         self.player_type = player_type
         self.current_hand = []
         self.current_bid = -1
+        self.current_card_idx = -1
         self.current_tricks_won = 0
         self.current_score = 0
         self.games_won = 0

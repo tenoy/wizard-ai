@@ -22,11 +22,8 @@ class Simulation(threading.Thread):
         if rollout_player is None:
             deck = list(state.deck)
             number_of_rounds = max_number_of_rounds
-            # in a normal state the order of players need to be set for each list
-            players_bid_order.rotate(-1)
-            players_play_order.rotate(-2)
         else:
-            deck = [card for card in state.deck if card not in rollout_player.current_hand]
+            deck = [card for card in state.deck if card not in rollout_player.current_hand and card not in state.played_cards]
             if state.trick.trump_card is not None:
                 deck.remove(state.trick.trump_card)
             number_of_rounds = state.round_nr
@@ -120,10 +117,24 @@ class Simulation(threading.Thread):
                     # print(f'simulation: {Simulation.input_q.queue}')
                     Simulation.input_q.join()
 
+            # in a rollout simulation, the round nr and trick nr needs to be stored before state.trick is changed in trick loop
+            if rollout_player is not None:
+                rollout_round = state.trick.round_nr
+                rollout_trick_nr = state.trick.trick_nr
+            else:
+                rollout_round = -1
+                rollout_trick_nr = -1
+
             # The player after the next player of the dealer starts the play
             # Each player plays a card one after another in each trick j of round i
             for j in range(0, i, 1):
-                trick = Trick(trump_card=trump_card, trump_suit=trump_suit, leading_suit=None, cards=[], played_by=[], round_nr=i, trick_nr=j)
+                if rollout_player is not None:
+                    if rollout_player.policy == 'myopic_rollout_play' and i == rollout_round and j == rollout_trick_nr:
+                        trick = state.trick
+                    else:
+                        trick = Trick(trump_card=trump_card, trump_suit=trump_suit, leading_suit=None, cards=[], played_by=[], round_nr=i, trick_nr=j)
+                else:
+                    trick = Trick(trump_card=trump_card, trump_suit=trump_suit, leading_suit=None, cards=[], played_by=[], round_nr=i, trick_nr=j)
                 state.trick = trick
                 if human_player is not None:
                     Simulation.input_q.put('UPDATE_TRICK')
@@ -131,8 +142,19 @@ class Simulation(threading.Thread):
                     Simulation.input_q.put('UPDATE_STATS')
                     Simulation.input_q.join()
                 for player in players_play_order:
-                    played_card = player.play(state)
+                    if state.round_nr == i and rollout_player == player:
+                        # todo: remove already played cards from hand of the other players and skip them
+                        if player.policy == 'myopic_rollout_play' and i == rollout_round and j == rollout_trick_nr:
+                            print('test')
+                            played_card = rollout_player.current_hand[rollout_player.current_card_idx]
+                            rollout_player.played_cards.appendleft(played_card)
+                            rollout_player.current_hand.remove(played_card)
+                        else:
+                            played_card = player.play(state)
+                    else:
+                        played_card = player.play(state)
                     trick.add_card(played_card, player)
+                    state.played_cards.append(played_card)
                     if trick.leading_suit is None:
                         trick.leading_suit = trick.get_leading_suit()
                     state.trick = trick

@@ -254,7 +254,7 @@ class PlayerGui:
             if entry == 'Expert':
                 players_initial_order.append(PlayerComputerRollout(nr, 'computer', entry))
 
-        self.state = State(players_initial_order, 1, Trick(), self.deck, {})
+        self.state = State(players_deal_order=players_initial_order, round_nr=1, trick=Trick(), deck=self.deck, bids={})
 
         if self.simulation_thread is not None:
             PlayerGui.output_q.put('GAME_RESTART')

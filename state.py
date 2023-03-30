@@ -41,14 +41,16 @@ class State:
                 self.players_play_order.append(player_copy)
 
         self.round_nr = round_nr
-        self.trick = Trick(trump_suit=trick.trump_suit, trump_card=trick.trump_card, leading_suit=trick.leading_suit, cards=list(trick.cards), played_by=list(trick.played_by), round_nr=round_nr, trick_nr=trick.trick_nr)
+        self.trick = Trick(trump_suit=trick.trump_suit, trump_card=trick.trump_card, leading_suit=trick.leading_suit, cards=list(trick.cards), played_by=list(), round_nr=round_nr, trick_nr=trick.trick_nr)
+        for player in trick.played_by:
+            player_copy = player_to_player_copy_dict[player]
+            self.trick.played_by.append(player_copy)
         self.deck = list(deck)
         self.bids = dict(bids)
         if played_cards is not None:
             self.played_cards = list(played_cards)
         else:
             self.played_cards = list()
-        print('test')
 
     @staticmethod
     def get_player_class(player):

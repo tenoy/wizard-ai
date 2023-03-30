@@ -142,6 +142,8 @@ class Simulation(threading.Thread):
                     Simulation.input_q.put('UPDATE_STATS')
                     Simulation.input_q.join()
                 for player in players_play_order:
+                    if player in trick.played_by:
+                        continue
                     if state.round_nr == i and rollout_player == player:
                         # todo: remove already played cards from hand of the other players and skip them
                         if player.policy == 'myopic_rollout_play' and i == rollout_round and j == rollout_trick_nr:

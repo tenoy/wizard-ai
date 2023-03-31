@@ -30,8 +30,6 @@ class Simulation(threading.Thread):
 
         # simulate rounds from round_nr to min of number of rounds or max number of rounds
         for i in range(state.round_nr, min(number_of_rounds+1, max_number_of_rounds+1), 1):
-            # create a new deque for 'in round order'
-            # players = deque(players_deal_order)
             # determine number of cards to sample from deck
             if i == max_number_of_rounds:
                 number_of_sampled_cards = i*len(players_deal_order)
@@ -40,17 +38,24 @@ class Simulation(threading.Thread):
                 number_of_sampled_cards = i*len(players_deal_order)+1
             # reduce number of sampled card by the cards in hand of rollout player
             if state.round_nr == i and rollout_player is not None:
-                number_of_sampled_cards = number_of_sampled_cards - len(rollout_player.current_hand)
+                number_of_sampled_cards = number_of_sampled_cards - len(rollout_player.current_hand) - len(state.played_cards)
             # Sample cards from deck
             sampled_cards = sample(deck, number_of_sampled_cards)
 
             # Each player gets their share of sampled cards
+            player_cards_dict = {}
+            for player in players_deal_order:
+                if rollout_player is not None:
+                    player_cards_dict[player] = len(player.current_hand)
+                else:
+                    player_cards_dict[player] = i
+
             start_idx = 0
             for player in players_deal_order:
                 if state.round_nr == i and rollout_player == player:
                     continue
-                player.current_hand = sampled_cards[start_idx:start_idx+i]
-                start_idx = start_idx + i
+                player.current_hand = sampled_cards[start_idx:start_idx+player_cards_dict[player]]
+                start_idx = start_idx + player_cards_dict[player]
 
             if human_player is not None:
                 Simulation.input_q.put('UPDATE_ROUND')
@@ -127,7 +132,7 @@ class Simulation(threading.Thread):
 
             # The player after the next player of the dealer starts the play
             # Each player plays a card one after another in each trick j of round i
-            for j in range(0, i, 1):
+            for j in range(state.trick.trick_nr, i+1):
                 if rollout_player is not None:
                     if rollout_player.policy == 'myopic_rollout_play' and i == rollout_round and j == rollout_trick_nr:
                         trick = state.trick
@@ -142,12 +147,11 @@ class Simulation(threading.Thread):
                     Simulation.input_q.put('UPDATE_STATS')
                     Simulation.input_q.join()
                 for player in players_play_order:
+                    # skip players that already have played a card (happens in rollout instances)
                     if player in trick.played_by:
                         continue
                     if state.round_nr == i and rollout_player == player:
-                        # todo: remove already played cards from hand of the other players and skip them
                         if player.policy == 'myopic_rollout_play' and i == rollout_round and j == rollout_trick_nr:
-                            print('test')
                             played_card = rollout_player.current_hand[rollout_player.current_card_idx]
                             rollout_player.played_cards.appendleft(played_card)
                             rollout_player.current_hand.remove(played_card)
@@ -196,6 +200,7 @@ class Simulation(threading.Thread):
                     Simulation.input_q.join()
                 players_play_order.rotate(rotate_by)
                 state.players_play_order = players_play_order
+                # trick = Trick(trump_suit=None, leading_suit=None, cards=[], played_by=[])
                 if human_player is not None:
                     print(*players_play_order)
                     print(*state.players_deal_order)
@@ -223,8 +228,9 @@ class Simulation(threading.Thread):
             players_play_order = deque(players_deal_order)
             state.players_play_order = players_play_order
             players_play_order.rotate(-2)
-            trick = Trick(trump_suit=None, leading_suit=None, cards=[], played_by=[])
-            state.trick = Trick(trump_suit=None, leading_suit=None, cards=[], played_by=[])
+            trick = Trick(trump_suit=None, leading_suit=None, cards=[], played_by=[], trick_nr=1)
+            state.trick = trick
+            state.played_cards = []
 
             if rollout_player is None:
                 state.round_nr = i + 1

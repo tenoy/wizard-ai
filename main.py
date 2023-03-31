@@ -121,7 +121,7 @@ if program_mode == 'simulation':
         players_initial_order.append(PlayerComputerDynamicWeightedRandom(3, 'computer', "dynamic_weighted_random"))
         players_initial_order.append(PlayerComputerMyopic(4, 'computer', "heuristic"))
         players_initial_order.append(PlayerComputerRollout(5, 'computer', "rollout"))
-        s0 = State(players_deal_order=players_initial_order, round_nr=1, trick=Trick(), deck=deck, bids={})
+        s0 = State(players_deal_order=players_initial_order, round_nr=1, trick=Trick(trick_nr=1), deck=deck, bids={})
         result = Simulation.simulate_episode(s0)
         result_list.append(result)
         print(f'Game {i} done')

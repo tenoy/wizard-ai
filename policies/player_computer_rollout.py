@@ -182,6 +182,14 @@ class PlayerComputerRollout(PlayerComputerMyopic):
                 rollout_players_positions[plr] = [i]
                 rollout_players_positions[plr].append(PlayerComputerRollout.get_position_in_list(plr, state.players_bid_order))
                 rollout_players_positions[plr].append(PlayerComputerRollout.get_position_in_list(plr, state.players_play_order))
+
+        for i in range(0, len(state.trick.played_by)):
+            plr = state.trick.played_by[i]
+            if isinstance(plr, PlayerHuman):
+                human_players_positions[plr].append(i)
+            if isinstance(plr, PlayerComputerRollout):
+                human_players_positions[plr].append(i)
+
         # copy original state
         state_rollout = State(players_deal_order=state.players_deal_order, round_nr=state.round_nr, trick=state.trick,
                               deck=state.deck, bids=state.bids, players_play_order=state.players_play_order, played_cards=state.played_cards)
@@ -194,10 +202,13 @@ class PlayerComputerRollout(PlayerComputerMyopic):
             state_rollout.players_bid_order.insert(human_players_positions[plr][1], human_substitute)
             del state_rollout.players_play_order[human_players_positions[plr][2]]
             state_rollout.players_play_order.insert(human_players_positions[plr][2], human_substitute)
+            # substitute human player in tricks played by list
+            if len(human_players_positions[plr]) == 4:
+                del state_rollout.trick.played_by[human_players_positions[plr][3]]
+                state_rollout.trick.played_by.insert(human_players_positions[plr][3], human_substitute)
 
         base_policy_player = None
         # substitute rollout player with a myopic policy
-        # TODO: Set policy to myopic_rollout_bid or myopic_rollout_play depending on type of rollout
         for plr in rollout_players_positions:
             base_policy_player = PlayerComputerRollout.substitute_player(plr, PlayerComputerMyopic(plr.number, 'computer', policy_name))
             # delete rollout player and insert base policy player
@@ -207,6 +218,10 @@ class PlayerComputerRollout(PlayerComputerMyopic):
             state_rollout.players_bid_order.insert(rollout_players_positions[plr][1], base_policy_player)
             del state_rollout.players_play_order[rollout_players_positions[plr][2]]
             state_rollout.players_play_order.insert(rollout_players_positions[plr][2], base_policy_player)
+            if len(rollout_players_positions[plr]) == 4:
+                del state_rollout.trick.played_by[rollout_players_positions[plr][3]]
+                state_rollout.trick.played_by.insert(rollout_players_positions[plr][3], base_policy_player)
+
         return state_rollout
 
     @staticmethod

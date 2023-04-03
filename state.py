@@ -51,6 +51,7 @@ class State:
             self.played_cards = list(played_cards)
         else:
             self.played_cards = list()
+        self.tricks = []
 
     @staticmethod
     def get_player_class(player):

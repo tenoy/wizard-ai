@@ -198,8 +198,10 @@ class Simulation(threading.Thread):
                     Simulation.input_q.join()
                     Simulation.input_q.put('UPDATE_TRICK_WINNER')
                     Simulation.input_q.join()
+
                 players_play_order.rotate(rotate_by)
                 state.players_play_order = players_play_order
+                state.tricks.append(trick)
                 # trick = Trick(trump_suit=None, leading_suit=None, cards=[], played_by=[])
                 if human_player is not None:
                     print(*players_play_order)

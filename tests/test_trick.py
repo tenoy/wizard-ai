@@ -83,7 +83,7 @@ class TestTrickFunctions(unittest.TestCase):
         test_tricks = self.generate_test_tricks()
         for _, value in test_tricks.items():
             print(str(value[0].cards) + ', trump=' + str(value[1]) + ', win=' + str(value[1]))
-            self.assertEqual(value[0].get_highest_trick_card(), value[1], "Should be: " + str(value[1]))
+            self.assertEqual(value[0].get_highest_trick_card_index(), value[1], "Should be: " + str(value[1]))
 
     def test_get_leading_suit(self):
         test_tricks = self.generate_test_tricks()

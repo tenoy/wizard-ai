@@ -12,13 +12,11 @@ class Deck:
             for j in range(2, 15, 1):
                 c = Card(Suit(i), Rank(j), is_game_mode=is_game_mode)
                 self.deck.append(c)
-                # print(c)
 
         # generate jesters
         for i in range(1, 5):
             c = Card(Suit.JOKER, Rank.JESTER, i, is_game_mode=is_game_mode)
             self.deck.append(c)
-            # print(c)
 
         # generate wizards
         for i in range(1, 5):

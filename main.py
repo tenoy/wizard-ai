@@ -84,7 +84,7 @@ def process_simulation_event_queue():
 
 # program mode is either 'game' (with human player) or 'simulation' (only computers)
 global program_mode
-program_mode = 'game'
+program_mode = 'simulation'
 
 if program_mode == 'game':
     is_game_mode = True
@@ -113,18 +113,28 @@ if program_mode == 'simulation':
     timestamp_start = datetime.datetime.now()
     result_list = []
     win_count_player = {}
-    for i in range(0, 100):
-        players_initial_order = deque()
-        # players_initial_order.append(PlayerComputerRollout(1, 'computer', "rollout"))
-        players_initial_order.append(PlayerComputerRandom(1, 'computer', "random"))
-        players_initial_order.append(PlayerComputerWeightedRandom(2, 'computer', "weighted_random"))
-        players_initial_order.append(PlayerComputerDynamicWeightedRandom(3, 'computer', "dynamic_weighted_random"))
-        players_initial_order.append(PlayerComputerMyopic(4, 'computer', "heuristic"))
-        players_initial_order.append(PlayerComputerRollout(5, 'computer', "rollout"))
-        s0 = State(players_deal_order=players_initial_order, round_nr=1, trick=Trick(trick_nr=1), deck=deck, bids={})
-        result = Simulation.simulate_episode(s0)
-        result_list.append(result)
-        print(f'Game {i} done')
+    time_formatted = timestamp_start.strftime("%Y_%m_%d_%H_%M_%S")
+
+    filename_round = 'out/' + time_formatted + '_round.csv'
+    filename_trick = 'out/' + time_formatted + '_trick.csv'
+    with open(filename_round, 'a', encoding='UTF8', newline='') as file_round, open(filename_trick, 'a', encoding='UTF8', newline='') as file_trick:
+        file_round.write('game_nr, round_nr, trump_card, trump_suit, player, bid_pos, bid, tricks_won, score\n')
+        file_trick.write('game_nr, round_nr, trump_card, trump_suit, trick_nr, leading_suit, winning_card, player, play_pos, played_card, legal_cards\n')
+        # writer = csv.DictWriter(f, fieldnames=fieldnames)
+        # writer.writeheader()
+
+        for i in range(0, 1000):
+            players_initial_order = deque()
+            # players_initial_order.append(PlayerComputerRollout(1, 'computer', "rollout"))
+            players_initial_order.append(PlayerComputerRandom(1, 'computer', "random"))
+            players_initial_order.append(PlayerComputerWeightedRandom(2, 'computer', "weighted_random"))
+            players_initial_order.append(PlayerComputerDynamicWeightedRandom(3, 'computer', "dynamic_weighted_random"))
+            players_initial_order.append(PlayerComputerMyopic(4, 'computer', "heuristic"))
+            # players_initial_order.append(PlayerComputerRollout(5, 'computer', "rollout"))
+            s0 = State(players_deal_order=players_initial_order, round_nr=1, trick=Trick(trick_nr=1), deck=deck, bids={})
+            result = Simulation.simulate_episode(s0, game_nr=i, file_round=file_round, file_trick=file_trick)
+            result_list.append(result)
+            print(f'Game {i} done')
 
     for result_tuple in result_list:
         if result_tuple[1] in win_count_player:

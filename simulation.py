@@ -13,7 +13,7 @@ class Simulation(threading.Thread):
     output_q = None
 
     @staticmethod
-    def simulate_episode(state, rollout_player=None, human_player=None):
+    def simulate_episode(state, rollout_player=None, human_player=None, game_nr=0, file_round=None, file_trick=None):
         players_deal_order = state.players_deal_order
         players_bid_order = state.players_bid_order
         players_play_order = state.players_play_order
@@ -122,7 +122,7 @@ class Simulation(threading.Thread):
                     # print(f'simulation: {Simulation.input_q.queue}')
                     Simulation.input_q.join()
 
-            # in a rollout simulation, the round nr and trick nr needs to be stored before state.trick is changed in trick loop
+            # in a rollout simulation run, the round nr and trick nr needs to be stored before state.trick is changed in trick loop
             if rollout_player is not None:
                 rollout_round = state.trick.round_nr
                 rollout_trick_nr = state.trick.trick_nr
@@ -141,11 +141,14 @@ class Simulation(threading.Thread):
                 else:
                     trick = Trick(trump_card=trump_card, trump_suit=trump_suit, leading_suit=None, cards=[], played_by=[], round_nr=i, trick_nr=j)
                 state.trick = trick
+
+                # gui update for a human player
                 if human_player is not None:
                     Simulation.input_q.put('UPDATE_TRICK')
                     Simulation.input_q.join()
                     Simulation.input_q.put('UPDATE_STATS')
                     Simulation.input_q.join()
+
                 for player in players_play_order:
                     # skip players that already have played a card (happens in rollout instances)
                     if player in trick.played_by:
@@ -159,30 +162,38 @@ class Simulation(threading.Thread):
                             played_card = player.play(state)
                     else:
                         played_card = player.play(state)
+
                     trick.add_card(played_card, player)
                     state.played_cards.append(played_card)
+
                     if trick.leading_suit is None:
                         trick.leading_suit = trick.get_leading_suit()
                     state.trick = trick
+
+                    # gui update for a human player
                     if human_player is not None:
                         Simulation.input_q.put('UPDATE_TRICK')
                         Simulation.input_q.join()
                         Simulation.input_q.put('UPDATE_STATS')
                         Simulation.input_q.join()
 
-                highest_card = trick.get_highest_trick_card()
+                # get winning card
+                highest_card_idx = trick.get_highest_trick_card_index()
+                highest_card = trick.cards[highest_card_idx]
                 win_count_card = Simulation.winning_cards.setdefault(highest_card, 0)
                 Simulation.winning_cards[highest_card] = win_count_card + 1
-                # evaluate trick winning player
-                winning_player = None
-                rotate_by = -1
-                for k in range(0, len(players_play_order), 1):
-                    player = players_play_order[k]
-                    if player.played_cards[0] == highest_card:
-                        player.current_tricks_won = player.current_tricks_won + 1
-                        winning_player = player
-                        # determine the number for queue rotation so that winning player starts in next trick
-                        rotate_by = len(players_play_order) - k
+                # update winning player
+                winning_player = players_play_order[highest_card_idx]
+                winning_player.current_tricks_won = winning_player.current_tricks_won + 1
+                # rotate players_play_order such that winning player plays first in next trick
+                rotate_by = len(players_play_order) - highest_card_idx
+                # write to csv
+                if file_trick is not None:
+                    for player_pos in range(0, len(players_play_order)):
+                        player = players_play_order[player_pos]
+                        file_trick.write(str(game_nr) + ',' + str(i) + ',' + str(trick.trump_card) + ',' + str(trick.trump_suit) + ',' + str(j) + ',' + str(trick.leading_suit) + ',' + str(highest_card) + ',' + str(player) + ',' + str(player_pos) + ',' + str(trick.cards[player_pos]) + ',' + str(trick.cards) + '\n')
+
+                # console output for a human player
                 for player in players_play_order:
                     if player.player_type == 'human':
                         print('Trump card: ' + str(trump_card))
@@ -191,6 +202,7 @@ class Simulation(threading.Thread):
                         print(*trick.cards, sep=', ')
                         print('Winning card: ' + str(highest_card) + ' from ' + str(winning_player))
                         print('==============================================================')
+                # gui update for a human player
                 if human_player is not None:
                     Simulation.input_q.put('UPDATE_HAND')
                     Simulation.input_q.join()
@@ -207,13 +219,16 @@ class Simulation(threading.Thread):
                     print(*players_play_order)
                     print(*state.players_deal_order)
 
-
             # Calc score for each player and reset player hands etc
-            for player in players_deal_order:
+            for player_pos in range(0, len(players_bid_order)):
+                player = players_deal_order[player_pos]
                 if player.current_bid == player.current_tricks_won:
                     player.current_score = player.current_score + 20 + player.current_tricks_won * 10
                 else:
                     player.current_score = player.current_score - (abs(player.current_tricks_won - player.current_bid)) * 10
+
+                if file_round is not None:
+                    file_round.write(str(game_nr) + ',' + str(i) + ',' + str(trick.trump_card) + ',' + str(trick.trump_suit) + ',' + str(player) + ',' + str(player_pos) + ',' + str(player.current_bid) + ',' + str(player.current_tricks_won) + ',' + str(player.current_score) + '\n')
                 # reset round dependent player vars
                 player.current_tricks_won = 0
                 player.current_bid = -1

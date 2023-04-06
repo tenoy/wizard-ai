@@ -384,8 +384,8 @@ class PlayerGui:
         self.round_label.configure(text=f'Round {state.round_nr}', style="Custom.TLabel")
 
     def update_trick_winner(self):
-        winning_card = self.state.trick.get_highest_trick_card()
-        winning_card_idx = self.state.trick.cards.index(winning_card)
+        winning_card_idx = self.state.trick.get_highest_trick_card_index()
+        winning_card = self.state.trick.cards[winning_card_idx]
         winning_player = self.state.trick.played_by[winning_card_idx]
         messagebox.showinfo(message=f'Winning card: {winning_card} from {winning_player}')
 

@@ -58,7 +58,7 @@ class TestStaticProb(unittest.TestCase):
                     rand_idx = random.randint(0, len(deck.deck)-1)
                     random_card = deck.deck[rand_idx]
                     value[0].cards.append(random_card)
-            highest_card = value[0].get_highest_trick_card()
+            highest_card = value[0].get_highest_trick_card_index()
             if highest_card == value[3]:
                 win_count = win_count + 1
                 pos_win_count_dict[random_pos] = pos_win_count_dict[random_pos] + 1

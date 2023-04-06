@@ -16,44 +16,47 @@ class Trick:
         self.cards.append(card)
         self.played_by.append(player)
 
-    def get_highest_trick_card(self):
+    def get_highest_trick_card_index(self):
         # case with empty trick
         if len(self.cards) == 0:
             return None
         # case with wizard in trick -> first wizard wins
-        for card in self.cards:
+        for idx in range(0, len(self.cards)):
+            card = self.cards[idx]
             if card.rank == Rank.WIZARD:
-                return card
+                return idx
+
         # case with trump in trick -> the highest trump card wins
         if self.trump_suit is not None:
-            trump_cards = []
-            for card in self.cards:
+            trump_cards = {}
+            for idx in range(0, len(self.cards)):
+                card = self.cards[idx]
                 if card.suit == self.trump_suit:
-                    trump_cards.append(card)
+                    trump_cards[card] = idx
 
-            if len(trump_cards) == 1:
-                return trump_cards[0]
-            elif len(trump_cards) > 1:
-                return max(trump_cards)
+            if len(trump_cards) > 0:
+                highest_trump = max(trump_cards)
+                return trump_cards[highest_trump]
 
         # case without wizard or trump card
         if self.leading_suit is None:
             self.leading_suit = self.get_leading_suit()
 
-        leading_suit_cards = []
+        leading_suit_cards = {}
         # leading suit might still be None (if only jesters are played)
         if self.leading_suit is not None:
-            for card in self.cards:
+            for idx in range(0, len(self.cards)):
+                card = self.cards[idx]
                 if card.suit == self.leading_suit:
-                    leading_suit_cards.append(card)
+                    leading_suit_cards[card] = idx
 
-            if len(leading_suit_cards) == 1:
-                return leading_suit_cards[0]
-            else:
-                return max(leading_suit_cards)
+            if len(leading_suit_cards) > 0:
+                highest_leading_suit = max(leading_suit_cards)
+                return leading_suit_cards[highest_leading_suit]
+
         else:
             # case with only jesters
-            return self.cards[0]  # the first jester wins
+            return 0  # the first jester wins
 
     def get_leading_suit(self):
         leading_suit = None

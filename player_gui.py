@@ -281,6 +281,12 @@ class PlayerGui:
         self.trick_frames.clear()
         self.trick_cards.clear()
 
+        #destroy current hand of old game
+        for i in range(0, 21):
+            if len(self.current_hand_cards) > 0:
+                self.current_hand_cards[i].destroy()
+        self.current_hand_cards.clear()
+
         player_name_short = textwrap.shorten(str(self.state.players_deal_order[0]), width=11, placeholder="...")
         self.trump_card_frame.configure(text=f'{player_name_short}')
         for i in range(len(self.state.players_deal_order)):

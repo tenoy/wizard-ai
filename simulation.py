@@ -191,7 +191,7 @@ class Simulation(threading.Thread):
                 if file_trick is not None:
                     for player_pos in range(0, len(players_play_order)):
                         player = players_play_order[player_pos]
-                        file_trick.write(str(game_nr) + ',' + str(i) + ',' + str(trick.trump_card) + ',' + str(trick.trump_suit) + ',' + str(j) + ',' + str(trick.leading_suit) + ',' + str(highest_card) + ',' + str(player) + ',' + str(player_pos) + ',' + str(trick.cards[player_pos]) + ',' + str(trick.cards) + '\n')
+                        file_trick.write(str(game_nr) + ',' + str(i) + ',' + str(trick.trump_card) + ',' + str(trick.trump_suit) + ',' + str(j) + ',' + str(trick.leading_suit) + ',' + str(highest_card) + ',' + str(player) + ',' + str(player_pos) + ',' + str(trick.cards[player_pos]) + '\n')
 
                 # console output for a human player
                 for player in players_play_order:

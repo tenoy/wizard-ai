@@ -56,6 +56,7 @@ class Card:
         for i in range(0, len(players)):
             if players[i] == player:
                 pos = i
+                break
 
         if trick.trump_card is None:
             n_trump_card = 0
@@ -69,11 +70,13 @@ class Card:
 
         n_cards_hand = len(current_hand)
         n_players = len(players)
-        n_cards_drawable = 60 - n_cards_hand - n_trump_card # the trump card is also not drawable (except in last round)
+        # the trump card is also not drawable (except in last round)
+        n_cards_drawable = 60 - n_cards_hand - n_trump_card
 
         if self.rank == Rank.WIZARD:
             n_wizards_in_hand = len([card for card in current_hand if card.rank == Rank.WIZARD])
             n_wizards_drawable = 4 - n_trump_wizard - n_wizards_in_hand
+            # to determine the correct number of possible wizards before own turn, get minimum of own position and wizards drawable
             n_wizards_before = min(pos, n_wizards_drawable)
             # get probability that 0 wizard cards are played before own wizard
             prob = self.calc_hypergeometric_prob(M=n_wizards_before, k=0, N=n_cards_drawable, n=n_players-1)
@@ -96,7 +99,7 @@ class Card:
         # if type of suit is trump, then count only higher trump cards and wizards
         # get all higher cards (trumps and wizards) in hand that are allowed to play
         if self.suit == trick.trump_suit:
-            # if the trump card is higher (but not wizard), it also must be accounted for the number of higher cards
+            # if the trump card is higher (but not wizard), it also must be subtracted for the number of higher cards
             # note that the trump suit of the trick can be different from the trump suit of the trump card (if wizard or jester)
             if trick.trump_card.rank > self.rank and trick.trump_card.suit != Suit.JOKER:
                 higher_trump_card = 1
@@ -119,7 +122,7 @@ class Card:
                     n_trump_cards = 13 #no trump card is drawn from drawable
                 else:
                     n_trump_cards = 12 #one less trump card since it was drawn for the trump card
-            # In 25% of the cases the card will match the leading suit, + 1 for the trump card
+            # In 25% of the cases the card will match the leading suit
             n_higher_cards = 4 - n_trump_wizard + Rank.ACE - self.rank + n_trump_cards - n_higher_cards_hand
             prob_leading_suit = self.calc_hypergeometric_prob(M=n_higher_cards, k=0, N=n_cards_drawable, n=n_players-1)
             # In 75% of the cases the card will not match the leading suit

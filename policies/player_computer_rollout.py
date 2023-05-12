@@ -2,9 +2,7 @@ import itertools
 import math
 import statistics
 from collections import deque
-
 from joblib import Parallel, delayed
-
 from player_human import PlayerHuman
 from simulation import Simulation
 from policies.player_computer_myopic import PlayerComputerMyopic
@@ -58,26 +56,26 @@ class PlayerComputerRollout(PlayerComputerMyopic):
         max_avg_bid = max(bid_avg_score_dict, key=bid_avg_score_dict.get)
         return max_avg_bid
 
-    def select_card(self, state, legal_cards, played_cards=None):
-        # nothing to calculate if only 1 viable decision option is available
-        if len(legal_cards) == 1:
-            return legal_cards[0]
-        # the original state must be copied and manipulated so that no rollout / human player are in the rollout state
-        state_rollout_template = PlayerComputerRollout.generate_template_rollout_state(state, 'play')
-        # get the position of the rollout player in state to change the selected card and set base_policy_player for simulate_episode
-        base_policy_player_pos = -1
-        for i in range(len(state.players_deal_order)):
-            plr = state.players_deal_order[i]
-            if plr.number == self.number:
-                base_policy_player_pos = i
-
-        decisions = []
-        for i in range(0, len(legal_cards)):
-            decisions.append(i)
-
-        card_idx_avg_score_dict = self.calculate_rollout_values_izs(state=state_rollout_template, decisions=decisions, decision_type='play', base_policy_player_pos=base_policy_player_pos, n_0=8, n_max=128, alpha=0.2, delta=9.0, batch_size=8)
-        max_avg_card_idx = max(card_idx_avg_score_dict, key=card_idx_avg_score_dict.get)
-        return legal_cards[max_avg_card_idx]
+    # def select_card(self, state, legal_cards, played_cards=None):
+    #     # nothing to calculate if only 1 viable decision option is available
+    #     if len(legal_cards) == 1:
+    #         return legal_cards[0]
+    #     # the original state must be copied and manipulated so that no rollout / human player are in the rollout state
+    #     state_rollout_template = PlayerComputerRollout.generate_template_rollout_state(state, 'play')
+    #     # get the position of the rollout player in state to change the selected card and set base_policy_player for simulate_episode
+    #     base_policy_player_pos = -1
+    #     for i in range(len(state.players_deal_order)):
+    #         plr = state.players_deal_order[i]
+    #         if plr.number == self.number:
+    #             base_policy_player_pos = i
+    #
+    #     decisions = []
+    #     for i in range(0, len(legal_cards)):
+    #         decisions.append(i)
+    #
+    #     card_idx_avg_score_dict = self.calculate_rollout_values_izs(state=state_rollout_template, decisions=decisions, decision_type='play', base_policy_player_pos=base_policy_player_pos, n_0=8, n_max=128, alpha=0.2, delta=9.0, batch_size=8)
+    #     max_avg_card_idx = max(card_idx_avg_score_dict, key=card_idx_avg_score_dict.get)
+    #     return legal_cards[max_avg_card_idx]
 
     # Fully sequential procedure for indifference-zone selection (izs) (Kim & Nelson (2001))
     def calculate_rollout_values_izs(self, state, decisions, decision_type, base_policy_player_pos, n_0, n_max, alpha, delta, batch_size):

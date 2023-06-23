@@ -22,32 +22,6 @@ class PlayerComputerRollout(PlayerComputerMyopic):
             if plr.number == self.number:
                 base_policy_player_pos = i
 
-        # with Parallel(n_jobs=8) as parallel:
-        # bid_avg_score_dict = {}
-            #bid_stdev_score_dict = {}
-            #bid_median_score_dict = {}
-        # for bid in range(0, state.round_nr+1):
-            # get the position of the rollout player in state to change the bid and set base_policy_player for simulate_episode
-            # base_policy_player_pos = -1
-            # for i in range(len(state_rollout_template.players_deal_order)):
-            #     plr = state_rollout_template.players_deal_order[i]
-            #     if plr.number == self.number:
-            #         base_policy_player_pos = i
-            # simulate n times and store score
-            # bid_scores = []
-            # bid_scores = parallel(delayed(self.sample_rollout_simulation)(state_rollout_template, base_policy_player_pos, bid) for i in range(0, 128))
-            # bid_scores = Parallel(n_jobs=8)(delayed(self.sample_rollout_simulation)(state_rollout_template, base_policy_player_pos, bid) for i in range(0, 8))
-            # for i in range(0, 128, 1):
-            #     # create copy of the template rollout state
-            #     state_rollout = State(state_rollout_template.players_deal_order, state_rollout_template.round_nr, state_rollout_template.trick, state_rollout_template.deck, state_rollout_template.bids, state_rollout_template.players_bid_order, state_rollout_template.players_play_order)
-            #     # get base policy player from copied state
-            #     base_policy_player = state_rollout.players_deal_order[base_policy_player_pos]
-            #     base_policy_player.current_bid = bid
-            #     # Simulate
-            #     bid_scores.append(Simulation.simulate_episode(state_rollout, base_policy_player))
-            # bid_avg_score_dict[bid] = statistics.mean(bid_scores)
-            #bid_stdev_score_dict[bid] = statistics.stdev(bid_scores)
-            #bid_median_score_dict[bid] = statistics.median(bid_scores)
         decisions = []
         for i in range(0, state.round_nr+1):
             decisions.append(i)
@@ -56,6 +30,7 @@ class PlayerComputerRollout(PlayerComputerMyopic):
         max_avg_bid = max(bid_avg_score_dict, key=bid_avg_score_dict.get)
         return max_avg_bid
 
+    # rollout for playing decisions - computationally expensive and rollout for bid and playing decisions performed worse than bid rollout
     # def select_card(self, state, legal_cards, played_cards=None):
     #     # nothing to calculate if only 1 viable decision option is available
     #     if len(legal_cards) == 1:
@@ -150,10 +125,13 @@ class PlayerComputerRollout(PlayerComputerMyopic):
     @staticmethod
     def sample_rollout_simulation(state_rollout_template, base_policy_player_pos, decision, decision_type):
         # create copy of the template rollout state
-        state_rollout = State(players_deal_order=state_rollout_template.players_deal_order, round_nr=state_rollout_template.round_nr,
-                              trick=state_rollout_template.trick, deck=state_rollout_template.deck,
-                              bids=state_rollout_template.bids, players_play_order=state_rollout_template.players_play_order,
-                              played_cards=state_rollout_template.played_cards)
+        # state_rollout = State(players_deal_order=state_rollout_template.players_deal_order, round_nr=state_rollout_template.round_nr,
+        #                       trick=state_rollout_template.trick, deck=state_rollout_template.deck,
+        #                       bids=state_rollout_template.bids, players_play_order=state_rollout_template.players_play_order,
+        #                       played_cards=state_rollout_template.played_cards)
+
+        state_rollout = state_rollout_template.copy_state()
+
         # get base policy player from copied state
         base_policy_player = state_rollout.players_deal_order[base_policy_player_pos]
         if decision_type == 'bid':
@@ -186,11 +164,13 @@ class PlayerComputerRollout(PlayerComputerMyopic):
             if isinstance(plr, PlayerHuman):
                 human_players_positions[plr].append(i)
             if isinstance(plr, PlayerComputerRollout):
-                human_players_positions[plr].append(i)
+                rollout_players_positions[plr].append(i)
 
         # copy original state
-        state_rollout = State(players_deal_order=state.players_deal_order, round_nr=state.round_nr, trick=state.trick,
-                              deck=state.deck, bids=state.bids, players_play_order=state.players_play_order, played_cards=state.played_cards)
+        # state_rollout = State(players_deal_order=state.players_deal_order, round_nr=state.round_nr, trick=state.trick,
+        #                       deck=state.deck, bids=state.bids, players_play_order=state.players_play_order, played_cards=state.played_cards)
+
+        state_rollout = state.copy_state()
 
         # substitute human players and rollout players
         PlayerComputerRollout.substitute_player(state_rollout, human_players_positions, 'myopic_human')

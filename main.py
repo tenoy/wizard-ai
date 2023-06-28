@@ -4,6 +4,7 @@ import time
 from collections import deque
 from tkinter import Tk
 from player_gui import PlayerGui
+from policies.player_computer_myopic2 import PlayerComputerMyopic2
 from simulation import Simulation
 from card import Card
 from enum_rank import Rank
@@ -123,19 +124,20 @@ if program_mode == 'simulation':
         # writer = csv.DictWriter(f, fieldnames=fieldnames)
         # writer.writeheader()
 
-        for i in range(0, 100):
+        for i in range(0, 1000):
             players_initial_order = deque()
             # players_initial_order.append(PlayerComputerRollout(1, 'computer', "rollout"))
             # players_initial_order.append(PlayerComputerRandom(1, 'computer', "random"))
             players_initial_order.append(PlayerComputerWeightedRandom(1, 'computer', "weighted_random"))
             players_initial_order.append(PlayerComputerDynamicWeightedRandom(2, 'computer', "dynamic_weighted_random"))
             players_initial_order.append(PlayerComputerMyopic(3, 'computer', "heuristic"))
-            players_initial_order.append(PlayerComputerRollout(4, 'computer', "rollout"))
+            players_initial_order.append(PlayerComputerMyopic2(4, 'computer', "heuristic2"))
+            # players_initial_order.append(PlayerComputerRollout(4, 'computer', "rollout"))
             bid_order = deque(players_initial_order)
             bid_order.rotate(-1)
             play_order = deque(players_initial_order)
             play_order.rotate(-2)
-            s0 = State(players_deal_order=players_initial_order, players_bid_order=bid_order, players_play_order=play_order, round_nr=1, trick=Trick(trick_nr=1), deck=deck, bids={})
+            s0 = State(players_deal_order=players_initial_order, players_bid_order=bid_order, players_play_order=play_order, round_nr=1, trick=Trick(trick_nr=1), deck=deck, bids={}, played_cards=[])
             result = Simulation.simulate_episode(s0, game_nr=i, file_round=file_round, file_trick=file_trick)
             result_list.append(result)
             print(f'Game {i} done')

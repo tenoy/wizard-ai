@@ -4,8 +4,7 @@ from enum_suit import Suit
 
 
 class Deck:
-
-    def __init__(self, is_game_mode):
+    def __init__(self, is_game_mode: bool) -> None:
         self.deck = []
         # generate normal cards
         for i in range(1, 5):

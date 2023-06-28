@@ -1,12 +1,22 @@
+from __future__ import annotations
+
+from collections import deque
 from math import comb
 from PIL import Image
 from enum_rank import Rank
 from enum_suit import Suit
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from state import State
+    from card import Card
+    from player import Player
+    from trick import Trick
 
 
 class Card:
 
-    def __init__(self, suit, rank, instance_number=0, is_game_mode=False):
+    def __init__(self, suit: Suit, rank: Rank, instance_number: int=0, is_game_mode: bool=False) -> None:
         self.suit = suit
         self.rank = rank
         # wizard and jester exist 4 times, to distinguish each instance a number from 1 to 4 is given
@@ -21,7 +31,7 @@ class Card:
         else:
             self.card_image = None
 
-    def load_card_image(self):
+    def load_card_image(self) -> Image:
         if self.suit != Suit.JOKER:
             suit_lowercase = str(self.suit).lower()
             image_original = Image.open(f'gui/cards/{self.rank.value}_of_{suit_lowercase}.png')
@@ -33,25 +43,25 @@ class Card:
         return card_image
 
     # use only to compare cards of same suit!
-    def __gt__(self, other):
+    def __gt__(self, other: Card) -> bool:
         return self.rank > other.rank
 
-    def __eq__(self, other):
+    def __eq__(self, other: Card) -> bool:
         return self.rank == other.rank and self.suit == other.suit and self.instance_number == other.instance_number
 
     def __hash__(self) -> int:
         return super().__hash__()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.rank) + ' ' + str(self.suit)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return str(self.rank) + ' ' + str(self.suit)
 
     # Calculates static a-priori probability for this card being the winning card
     # Therefore the (counter)probability of drawing a higher card is calculated
     # Used mostly in bidding phase since only current hand and trump card is known
-    def calc_static_win_prob(self, trick, current_hand, players, player):
+    def calc_static_win_prob(self, trick: Trick, current_hand: list[Card], players: deque[Player], player: Player) -> float:
         pos = -1
         for i in range(0, len(players)):
             if players[i] == player:
@@ -137,7 +147,7 @@ class Card:
             return prob
 
     # Calculates the dynamic / state dependent winning probability of a card
-    def calc_dynamic_win_prob(self, trick, cards_played, cards_legal, current_hand, players):
+    def calc_dynamic_win_prob(self, trick: Trick, cards_played: list[Card], cards_legal: list[Card], current_hand: list[Card], players: deque[Player]) -> float:
         # calc how many turns are made after playing this card
         n_players = len(players)
         n_cards_played = len(cards_played)
@@ -237,12 +247,13 @@ class Card:
     # Probability that a card wins is the probability that no higher card is drawn afterwards
     # Use hypergeometric distribution formula: P(X=k) = ((M over k) * (N - M over n - k)) / (N over n)
     # N = number of cards drawable, M = Number of higher cards, n = turns left in trick, k = exact number of times a card should be drawn
-    # Example for winning with a jester in a 3 player game:
+    # Example arguments for winning prob with a jester in a 3 player game (when first to play):
     # N=58 (no cards played yet),  M=3 (3 Jesters left in deck), n=2 (2 turns to play), k=2 (both must play jester)
-    # Example for ACE HEARTS trump card in a 3 player game:
+    # Example arguments for winning prob with a ACE HEARTS trump card in a 3 player game (when first to play):
     # N=58, M=4 (only the wizards can beat a trump ace), n=2 (2 turns to play), k=0 (both must NOT play a wizard)
     # https://studyflix.de/statistik/ziehen-ohne-zuruecklegen-1077
-    def calc_hypergeometric_prob(self, M: int, k: int, N: int, n: int) -> float:
+    @staticmethod
+    def calc_hypergeometric_prob(M: int, k: int, N: int, n: int) -> float:
         if M < 0 or k < 0 or N < 0 or n < 0:
             print(f'M={M}, k={k}, N={N}, n={n}')
         prob = comb(M, k) * comb(N - M, n - k) / comb(N, n)

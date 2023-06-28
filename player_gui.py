@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+import queue
 import sys
 import textwrap
 import threading
@@ -16,6 +19,12 @@ from policies.player_computer_weighted_random import PlayerComputerWeightedRando
 from simulation import Simulation
 from state import State
 from trick import Trick
+from typing import TYPE_CHECKING, Literal
+
+if TYPE_CHECKING:
+    from tkinter import Tk
+    from deck import Deck
+    from player import Player
 
 # list/variable must be global due to bug in ImageTk
 
@@ -29,7 +38,7 @@ class PlayerGui:
     output_q = None
     input_q = None
 
-    def __init__(self, master, deck, input_q, output_q):
+    def __init__(self, master: Tk, deck: Deck, input_q: queue.Queue, output_q: queue.Queue) -> None:
 
         PlayerGui.output_q = output_q
         PlayerGui.input_q = input_q
@@ -158,7 +167,7 @@ class PlayerGui:
         master.protocol("WM_DELETE_WINDOW", self.on_closing_root)
         self.show_game_options()
 
-    def show_game_options(self):
+    def show_game_options(self) -> None:
         # game start option dialogue
         if self.state is None:
             self.master.withdraw()
@@ -213,7 +222,7 @@ class PlayerGui:
         start_game_button = Button(mainframe_game_options, text='Start Game!', command=self.start_game)
         start_game_button.grid(row=2, column=0, columnspan=3, padx=10, pady=10)
 
-    def add_computer_player(self):
+    def add_computer_player(self) -> None:
         selection = self.add_computer_list.curselection()
         if len(selection) > 0:
             selection_computer = self.add_computer_list.get(selection)
@@ -223,20 +232,20 @@ class PlayerGui:
             else:
                 self.selected_computer_list.insert(END, selection_computer)
 
-    def remove_computer_player(self):
+    def remove_computer_player(self) -> None:
         selection = self.selected_computer_list.curselection()
         if len(selection) > 0:
             self.selected_computer_list.delete(self.selected_computer_list.curselection())
 
-    def start_game(self):
+    def start_game(self) -> None:
         if self.selected_computer_list.size() < 2:
             messagebox.showinfo(message=f'You have to add at least 2 players')
         else:
             self.setup_game()
             self.master.deiconify()
 
-    def setup_game(self):
-        players_initial_order = list()
+    def setup_game(self) -> None:
+        players_initial_order = deque()
         self.human_player = PlayerHuman(1, 'human', player_name='Wizard Player', input_q=PlayerGui.input_q, output_q=PlayerGui.output_q)
         human_player_name = self.entry_human_player_name.get()
         self.human_player.name = human_player_name
@@ -338,7 +347,7 @@ class PlayerGui:
 
         self.game_options_master.destroy()
 
-    def update_hand(self):
+    def update_hand(self) -> None:
         state = self.state
         # stores the card and the widget so that if a widget is clicked, the corresponding card can be obtained
         self.widget_card_dict.clear()
@@ -352,7 +361,7 @@ class PlayerGui:
         for i in range(len(human_player.current_hand), 21):
             self.current_hand_cards[i].configure(image='', style="Custom3.TLabel")
 
-    def update_trump(self):
+    def update_trump(self) -> None:
         state = self.state
         player_name_short = textwrap.shorten(str(state.players_deal_order[0]), width=11, placeholder="...")
         self.trump_card_frame.configure(text=f'{player_name_short}')
@@ -365,7 +374,7 @@ class PlayerGui:
             card = state.trick.trump_card
             self.trump_card.configure(image=card_images[card], style="Custom3.TLabel")
 
-    def update_stats(self):
+    def update_stats(self) -> None:
         state = self.state
         for i in range(len(state.players_bid_order)):
             player = state.players_bid_order[i]
@@ -378,7 +387,7 @@ class PlayerGui:
             self.player_tricks_won_labels[i].configure(text=f'{player.current_tricks_won}')
             self.player_score_labels[i].configure(text=f'{player.current_score}')
 
-    def update_trick(self):
+    def update_trick(self) -> None:
         state = self.state
         for i in range(len(state.players_play_order)):
             player = state.players_play_order[i]
@@ -389,17 +398,17 @@ class PlayerGui:
         for i in range(len(state.trick.cards)):
             self.trick_cards[i].configure(image=card_images[state.trick.cards[i]], style="Custom3.TLabel")
 
-    def update_round(self):
+    def update_round(self) -> None:
         state = self.state
         self.round_label.configure(text=f'Round {state.round_nr}', style="Custom.TLabel")
 
-    def update_trick_winner(self):
+    def update_trick_winner(self) -> None:
         winning_card_idx = self.state.trick.get_highest_trick_card_index()
         winning_card = self.state.trick.cards[winning_card_idx]
         winning_player = self.state.trick.played_by[winning_card_idx]
         messagebox.showinfo(message=f'Winning card: {winning_card} from {winning_player}')
 
-    def enter_bid(self):
+    def enter_bid(self) -> None:
         if self.enter_bid_window is None:
             self.enter_bid_window = Toplevel(self.master)
             self.enter_bid_window.title('Enter Bid!')
@@ -417,13 +426,13 @@ class PlayerGui:
         self.enter_bid_entry.focus_force()
         self.enter_bid_window.protocol("WM_DELETE_WINDOW", self.on_closing_bid)
 
-    def input_bid(self, event=None):
+    def input_bid(self, event=None) -> None:
         bid = self.enter_bid_entry.get()
         input_bid = ('INPUT_BID', bid)
         PlayerGui.output_q.put(input_bid)
         self.enter_bid_window.withdraw()
 
-    def game_over(self):
+    def game_over(self) -> None:
         winning_player = max(self.state.players_deal_order, key=lambda x: x.current_score)
         self.game_over_window = Toplevel(self.master)
         self.game_over_window.title('Game Over!')
@@ -442,12 +451,12 @@ class PlayerGui:
         new_game_button = Button(buttons_frame, text='New Game', command=self.start_new_game, height=2, width=9)
         new_game_button.pack(padx=10, side='right')
 
-    def start_new_game(self):
+    def start_new_game(self) -> None:
         self.game_over_window.destroy()
         self.show_game_options()
 
     @staticmethod
-    def get_human_player(state):
+    def get_human_player(state: State) -> Player:
         human_plr = None
         for plr in state.players_deal_order:
             if plr.player_type == 'human':
@@ -455,36 +464,36 @@ class PlayerGui:
         return human_plr
 
     @staticmethod
-    def on_closing_root():
+    def on_closing_root() -> None:
         sys.exit()
 
-    def on_closing_bid(self):
+    def on_closing_bid(self) -> None:
         messagebox.showinfo(message='You need to input a bid!', title='Exit Bid')
         self.enter_bid_entry.focus_force()
 
-    def on_closing_suit(self):
+    def on_closing_suit(self) -> None:
         messagebox.showinfo(message='You need to select a suit!', title='Exit Suit')
         self.select_suit_master.focus_force()
 
-    def click_select_card(self, event):
+    def click_select_card(self, event) -> None:
         caller = event.widget
         card = self.widget_card_dict.get(caller)
         input_card = ('INPUT_CARD', card)
         PlayerGui.output_q.put(input_card)
 
     @staticmethod
-    def invalid_card():
+    def invalid_card() -> None:
         messagebox.showinfo(message='You have at least one card that fits the suit. You must either play a card with fitting suit or a joker card.', title='Invalid Card')
 
     @staticmethod
-    def invalid_bid():
+    def invalid_bid() -> None:
         messagebox.showinfo(message='With your bid the sum of bids equals the round number. The sum of bids is not allowed to match the round number.',title='Invalid Bid')
 
     @staticmethod
-    def invalid_input():
+    def invalid_input() -> None:
         messagebox.showinfo(message='Invalid input. Input must be a positive number.', title='Invalid Input')
 
-    def select_suit(self):
+    def select_suit(self) -> None:
         self.select_suit_master = Toplevel(self.master)
         self.select_suit_master.title('Select a Suit')
         self.select_suit_master.geometry('415x150')
@@ -502,7 +511,7 @@ class PlayerGui:
                 col = col + 1
         self.select_suit_master.protocol("WM_DELETE_WINDOW", self.on_closing_suit)
 
-    def click_select_suit(self, event):
+    def click_select_suit(self, event) -> None:
         caller = event.widget
         suit = self.widget_suit_dict.get(caller)
         input_suit = ('INPUT_SUIT', suit)

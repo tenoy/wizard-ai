@@ -1,8 +1,14 @@
+from __future__ import annotations
 import queue
 import sys
 import time
 from enum_suit import Suit
 from player import Player
+from typing import TYPE_CHECKING, Literal
+
+if TYPE_CHECKING:
+    from state import State
+    from card import Card
 
 
 class PlayerHuman(Player):
@@ -10,20 +16,20 @@ class PlayerHuman(Player):
     input_q = None
     output_q = None
 
-    def __init__(self, number, player_type, player_name='', input_q=None, output_q=None):
+    def __init__(self, number: int, player_type: Literal["human"], player_name: str='', input_q: queue.Queue=None, output_q: queue.Queue=None) -> None:
         super(PlayerHuman, self).__init__(number, player_type)
         self.name = player_name
         PlayerHuman.input_q = input_q
         PlayerHuman.output_q = output_q
 
-    def __str__(self):
+    def __str__(self) -> str:
         return 'Player_' + str(self.number) + ' ' + self.name
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return 'Player_' + str(self.number) + ' ' + self.name
 
     @staticmethod
-    def is_input_valid(input_value):
+    def is_input_valid(input_value: int) -> bool:
         if input_value is None:
             return False
         try:
@@ -36,7 +42,7 @@ class PlayerHuman(Player):
             is_valid = False
         return is_valid
 
-    def make_bid(self, state):
+    def make_bid(self, state: State) -> int:
         bid = -1
         print('Round: ' + str(state.round_nr))
         print('Current Scores: ', end=' ')
@@ -108,7 +114,7 @@ class PlayerHuman(Player):
         # print(f'return value: {bid}')
         return bid
 
-    def play(self, state):
+    def play(self, state: State) -> Card:
         selected_card = None
         idx = -1
         print('Bids: ', end=' ')
@@ -155,7 +161,7 @@ class PlayerHuman(Player):
 
         return selected_card
 
-    def pick_suit(self, state):
+    def pick_suit(self, state: State) -> Suit:
         selected_suit = None
         print('Round: ' + str(state.round_nr))
         print('You are the dealer and have drawn a WIZARD as the trump card. You may choose a suit.')

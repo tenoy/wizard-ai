@@ -1,13 +1,20 @@
+from __future__ import annotations
 import math
-
 from policies.player_computer_rollout import PlayerComputerRollout
 from policies.utils.tree_node import TreeNode
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from state import State
+    from card import Card
+    from trick import Trick
+    from player import Player
 
 
 # Implementation of the Monte Carlo Tree Search (MCTS) / Information Set MCTS algorithm
 class PlayerComputerMCTS(PlayerComputerRollout):
 
-    def select_card(self, state, legal_cards, played_cards=None):
+    def select_card(self, state: State, legal_cards: list[Card], played_cards: list[Card]=None) -> Card:
         # start a root
         root = TreeNode()
         # add all possible decisions as child nodes to root
@@ -16,7 +23,7 @@ class PlayerComputerMCTS(PlayerComputerRollout):
             node.parent_node = root
             root.child_nodes.append(node)
 
-    def select_node(self, current_node):
+    def select_node(self, current_node: TreeNode):
         node_ucb_score_dict = {}
         for child_node in current_node.child_nodes:
             node_ucb_score_dict[child_node] = self.calculate_ucb1(current_node, child_node)
@@ -24,16 +31,14 @@ class PlayerComputerMCTS(PlayerComputerRollout):
         ties = []
         highest_node = node_ucb_score_dict_sorted[0]
 
-
-
-    def expand_node(self, current_node):
+    def expand_node(self, current_node: TreeNode):
         pass
 
     def rollout(self):
         # logic for rollout here, basically just call calculate_rollout_values_izs and return avg of that
         pass
 
-    def backpropagate(self, current_node, config):
+    def backpropagate(self, current_node: TreeNode, config):
         val = current_node.get_lte().get_value()
         while current_node.get_parent_node() is not None:
             parent_node = current_node.get_parent_node()
@@ -42,7 +47,7 @@ class PlayerComputerMCTS(PlayerComputerRollout):
             parent_node.get_lte().set_value_sums(val)
             current_node = parent_node
 
-    def calculate_ucb1(self, parent_node, child_node):
+    def calculate_ucb1(self, parent_node: TreeNode, child_node: TreeNode):
         constant_c = 2
         parent_count = parent_node.get_lte().get_counter()
         child_count = child_node.get_lte().get_counter()

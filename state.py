@@ -1,3 +1,4 @@
+from __future__ import annotations
 from collections import deque
 from player_computer import PlayerComputer
 from player_human import PlayerHuman
@@ -6,11 +7,16 @@ from policies.player_computer_myopic import PlayerComputerMyopic
 from policies.player_computer_random import PlayerComputerRandom
 from policies.player_computer_weighted_random import PlayerComputerWeightedRandom
 from trick import Trick
+from typing import TYPE_CHECKING, Literal
+
+if TYPE_CHECKING:
+    from card import Card
+    from player import Player
 
 
 class State:
 
-    def __init__(self, players_deal_order, players_bid_order, players_play_order, round_nr, trick, deck, bids, played_cards=None):
+    def __init__(self, players_deal_order: deque[Player], players_bid_order: deque[Player], players_play_order: deque[Player], round_nr: int, trick: Trick, deck: list[Card], bids: dict[Player, int], played_cards: list[Card]=None) -> None:
         self.players_deal_order = players_deal_order
         self.players_bid_order = players_bid_order
         self.players_play_order = players_play_order
@@ -21,7 +27,7 @@ class State:
         self.played_cards = played_cards
         self.tricks = []
 
-    def copy_state(self):
+    def copy_state(self) -> State:
         # players_deal_order, round_nr, trick, deck, bids, players_play_order=None, played_cards=None
         state_copy = State(self.players_deal_order, self.players_bid_order, self.players_play_order, self.round_nr, self.trick, self.deck, self.bids)
         # deal order list is used for the deep copy (necessary for rollout policy)
@@ -70,7 +76,7 @@ class State:
         return state_copy
 
     @staticmethod
-    def get_player_class(player):
+    def get_player_class(player: Player) -> Player:
         # local import necessary or else a circular import error is happening
         from policies.player_computer_rollout import PlayerComputerRollout
         if isinstance(player, PlayerComputerRandom):

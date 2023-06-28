@@ -1,4 +1,10 @@
+from __future__ import annotations
 from policies.player_computer_weighted_random import PlayerComputerWeightedRandom
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from state import State
+    from card import Card
 
 
 # dynamic weighted random policy
@@ -6,8 +12,7 @@ from policies.player_computer_weighted_random import PlayerComputerWeightedRando
 # plays cards assessing the current trick and the current hand and calculates winning probabilities based on these
 class PlayerComputerDynamicWeightedRandom(PlayerComputerWeightedRandom):
 
-    def select_card(self, state, legal_cards, played_cards=None):
-        selected_card = None
+    def select_card(self, state: State, legal_cards: list[Card], played_cards: list[Card]=None) -> Card:
         interval = 0
         probs_dict = {}
         for card in legal_cards:

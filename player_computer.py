@@ -1,26 +1,34 @@
+from __future__ import annotations
 from abc import abstractmethod
 from enum_rank import Rank
 from enum_suit import Suit
 from player import Player
+from typing import TYPE_CHECKING, Union, Literal
+
+if TYPE_CHECKING:
+    from state import State
+    from card import Card
 
 
 class PlayerComputer(Player):
 
-    def __init__(self, number, player_type, policy):
+    def __init__(self, number: int, player_type: Literal["computer"], policy_name: str) -> None:
         super(PlayerComputer, self).__init__(number, player_type)
-        self.policy = policy
+        self.policy = policy_name
 
-    def make_bid(self, state):
+    def make_bid(self, state: State) -> int:
         bid = self.calculate_bid(state)
         while not self.is_valid_bid(state=state, bid=bid):
             bid = self.recalculate_bid(state, bid)
 
         return bid
 
-    def play(self, state):
+    def play(self, state: State) -> Card:
         legal_cards = self.get_legal_cards(state.trick.leading_suit)
-        # selected_card = self.select_card(trick=trick, bids=bids, legal_cards=legal_cards, current_hand=self.current_hand, played_cards=self.get_played_cards(bids.keys()), players=bids.keys())
-        selected_card = self.select_card(state, legal_cards=legal_cards, played_cards=self.get_played_cards(state.players_play_order))
+        if len(legal_cards) == 1:
+            return legal_cards[0]
+        else:
+            selected_card = self.select_card(state, legal_cards=legal_cards, played_cards=self.get_played_cards(state.players_play_order))
 
         if selected_card is None:
             raise Exception('No card selected. A card must be selected. Exiting.')
@@ -29,7 +37,7 @@ class PlayerComputer(Player):
         self.current_hand.remove(selected_card)
         return selected_card
 
-    def pick_suit(self, state):
+    def pick_suit(self, state: State) -> Suit:
         selected_suit = self.select_suit(state)
 
         if selected_suit is None:
@@ -37,22 +45,22 @@ class PlayerComputer(Player):
         return selected_suit
 
     @abstractmethod
-    def select_card(self, state, legal_cards, played_cards=None):
+    def select_card(self, state: State, legal_cards: list[Card], played_cards: list[Card]=None) -> Card:
         pass
 
     @abstractmethod
-    def calculate_bid(self, state):
+    def calculate_bid(self, state: State) -> int:
         pass
 
     @abstractmethod
-    def recalculate_bid(self, state, bid):
+    def recalculate_bid(self, state: State, bid: int) -> int:
         pass
 
     @abstractmethod
-    def select_suit(self, state):
+    def select_suit(self, state: State) -> Suit:
         pass
 
-    def get_legal_cards(self, leading_suit):
+    def get_legal_cards(self, leading_suit: Suit) -> list[Card]:
         # prepare set of cards that are allowed to play so that the policies dont have to deal with that again and again
         legal_cards = []
         if leading_suit is None or leading_suit == Suit.JOKER or not self.has_leading_suit_in_hand(leading_suit):
@@ -63,7 +71,7 @@ class PlayerComputer(Player):
                     legal_cards.append(card)
         return legal_cards
 
-    def get_highest_legal_card(self, legal_cards, trump_suit, leading_suit):
+    def get_highest_legal_card(self, legal_cards: list, trump_suit: Suit, leading_suit: Suit) -> Union[Card, None]:
         # case with empty legal cards
         if len(legal_cards) == 0:
             return None

@@ -1,12 +1,22 @@
+from __future__ import annotations
 import random
+from collections import deque
+
 from enum_rank import Rank
 from enum_suit import Suit
 from policies.player_computer_weighted_random import PlayerComputerWeightedRandom
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from state import State
+    from card import Card
+    from player import Player
+    from trick import Trick
 
 
 class PlayerComputerMyopic(PlayerComputerWeightedRandom):
 
-    def calculate_bid(self, state):
+    def calculate_bid(self, state: State) -> int:
         bid = 0
         for card in self.current_hand:
             if card.rank == Rank.WIZARD:
@@ -17,7 +27,7 @@ class PlayerComputerMyopic(PlayerComputerWeightedRandom):
                     bid = bid + 1
         return bid
 
-    def select_card(self, state, legal_cards, played_cards=None):
+    def select_card(self, state: State, legal_cards: list[Card], played_cards: list[Card]=None) -> Card:
         if self.current_tricks_won < self.current_bid:
             probs_dict = {}
             for card in legal_cards:
@@ -40,7 +50,7 @@ class PlayerComputerMyopic(PlayerComputerWeightedRandom):
         return selected_card
 
     #trick, cards_played, cards_legal, current_hand, players
-    def build_static_probs_dict(self, trick, cards, players, win_prob=True):
+    def build_static_probs_dict(self, trick: Trick, cards: list[Card], players: deque[Player], win_prob: bool=True) -> dict[Card, float]:
         probs_dict = {}
         for card in cards:
             prob = card.calc_static_win_prob(trick, self.current_hand, players, self)
@@ -49,7 +59,7 @@ class PlayerComputerMyopic(PlayerComputerWeightedRandom):
             probs_dict[card] = prob
         return probs_dict
 
-    def select_suit(self, state):
+    def select_suit(self, state: State) -> Suit:
         suit_rank_sum_dict = {}
         for card in self.current_hand:
             if card.suit != Suit.JOKER:
@@ -62,9 +72,12 @@ class PlayerComputerMyopic(PlayerComputerWeightedRandom):
             selected_suit = Suit(rnd_idx)
         return selected_suit
 
+    # returns the lowest rank card, that has maximum winning prob (i.e. win with the lowest card possible)
     @staticmethod
-    def get_min_max_card(max_prob_cards, trick):
+    def get_min_max_card(max_prob_cards: list[Card], trick: Trick) -> Card:
         min_max_card = max_prob_cards[0]
+        if len(max_prob_cards) == 1:
+            return min_max_card
         for i in range(1, len(max_prob_cards)):
             card = max_prob_cards[i]
             # case if card has the same suit and possibly lower rank

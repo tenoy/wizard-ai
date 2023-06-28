@@ -8,5 +8,5 @@ class Suit(Enum):
     DIAMONDS = 4    #Karo
     JOKER = 5
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name

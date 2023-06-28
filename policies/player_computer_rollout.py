@@ -1,3 +1,4 @@
+from __future__ import annotations
 import itertools
 import math
 import statistics
@@ -6,12 +7,17 @@ from joblib import Parallel, delayed
 from player_human import PlayerHuman
 from simulation import Simulation
 from policies.player_computer_myopic import PlayerComputerMyopic
-from state import State
+
+from typing import TYPE_CHECKING, Literal
+
+if TYPE_CHECKING:
+    from state import State
+    from player import Player
 
 
 class PlayerComputerRollout(PlayerComputerMyopic):
 
-    def calculate_bid(self, state):
+    def calculate_bid(self, state: State) -> int:
         # the original state must be copied and manipulated so that no rollout / human player are in the rollout state
         state_rollout_template = PlayerComputerRollout.generate_template_rollout_state(state, 'bid')
 
@@ -53,7 +59,7 @@ class PlayerComputerRollout(PlayerComputerMyopic):
     #     return legal_cards[max_avg_card_idx]
 
     # Fully sequential procedure for indifference-zone selection (izs) (Kim & Nelson (2001))
-    def calculate_rollout_values_izs(self, state, decisions, decision_type, base_policy_player_pos, n_0, n_max, alpha, delta, batch_size):
+    def calculate_rollout_values_izs(self, state: State, decisions: list[int], decision_type: Literal["bid", "play"], base_policy_player_pos: int, n_0: int, n_max: int, alpha: float, delta: float, batch_size: int) -> dict[int, float]:
         decision_values_dict = {}
         decisions_considered = []
         # initialization of izs
@@ -123,7 +129,7 @@ class PlayerComputerRollout(PlayerComputerMyopic):
         return decision_mean_scores_final_dict
 
     @staticmethod
-    def sample_rollout_simulation(state_rollout_template, base_policy_player_pos, decision, decision_type):
+    def sample_rollout_simulation(state_rollout_template: State, base_policy_player_pos: int, decision: int, decision_type: Literal["bid", "play"]) -> tuple[int, str] | dict[str, int]:
         # create copy of the template rollout state
         # state_rollout = State(players_deal_order=state_rollout_template.players_deal_order, round_nr=state_rollout_template.round_nr,
         #                       trick=state_rollout_template.trick, deck=state_rollout_template.deck,
@@ -143,7 +149,7 @@ class PlayerComputerRollout(PlayerComputerMyopic):
         return result
 
     @staticmethod
-    def generate_template_rollout_state(state, decision_type):
+    def generate_template_rollout_state(state: State, decision_type: Literal["bid", "play"]) -> State:
         # get all rollout / human player positions in deal, bid and play lists
         human_players_positions = {}
         rollout_players_positions = {}
@@ -179,21 +185,21 @@ class PlayerComputerRollout(PlayerComputerMyopic):
         return state_rollout
 
     @staticmethod
-    def copy_player(player, substitute):
+    def copy_player(player: Player, substitute: Player) -> Player:
         substitute.current_bid = player.current_bid
         substitute.current_hand = list(player.current_hand)
         substitute.played_cards = deque(player.played_cards)
         return substitute
 
     @staticmethod
-    def get_position_in_list(player, player_list):
+    def get_position_in_list(player: Player, player_list: deque[Player]) -> int:
         for i in range(len(player_list)):
             p = player_list[i]
             if p == player:
                 return i
 
     @staticmethod
-    def substitute_player(state_rollout, player_positions, policy_name):
+    def substitute_player(state_rollout: State, player_positions: dict[Player, list[int]], policy_name: str) -> None:
         for plr in player_positions:
             base_policy_player = PlayerComputerRollout.copy_player(plr, PlayerComputerMyopic(plr.number, 'computer', policy_name))
             # delete player and insert base policy player

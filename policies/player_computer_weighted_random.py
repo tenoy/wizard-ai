@@ -1,6 +1,16 @@
+from __future__ import annotations
 import random
+from collections import deque
+
 from enum_suit import Suit
 from player_computer import PlayerComputer
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from state import State
+    from card import Card
+    from trick import Trick
+    from player import Player
 
 
 # static weighted random policy
@@ -8,7 +18,7 @@ from player_computer import PlayerComputer
 # plays cards in a similar way
 class PlayerComputerWeightedRandom(PlayerComputer):
 
-    def calculate_bid(self, state):
+    def calculate_bid(self, state: State) -> int:
         bid = 0
         for card in self.current_hand:
             rnd = random.uniform(0, 1)
@@ -18,15 +28,14 @@ class PlayerComputerWeightedRandom(PlayerComputer):
 
         return bid
 
-    def recalculate_bid(self, state, bid):
+    def recalculate_bid(self, state: State, bid: int) -> int:
         if bid == 0:
             bid = 1
         else:
             bid = bid + random.randint(-1, 1)
         return bid
 
-    def select_card(self, state, legal_cards, played_cards=None):
-        selected_card = None
+    def select_card(self, state: State, legal_cards: list[Card], played_cards: list[Card]=None) -> Card:
         probs_dict = self.build_static_probs_interval_dict(trick=state.trick, cards=legal_cards, players=state.players_play_order)
         prob_sum = 0
         for v in probs_dict.values():
@@ -34,11 +43,9 @@ class PlayerComputerWeightedRandom(PlayerComputer):
         if prob_sum == 0:
             probs_dict = self.build_static_probs_interval_dict(trick=state.trick, cards=legal_cards, players=state.players_play_order, win_prob=False)
         selected_card = self.select_card_in_static_probs_interval_dict(probs_dict)
-        if selected_card is None:
-            raise Exception('No card selected. A card must be selected. Exiting.')
         return selected_card
 
-    def build_static_probs_interval_dict(self, trick, cards, players, win_prob=True):
+    def build_static_probs_interval_dict(self, trick: Trick, cards: list[Card], players: deque[Player], win_prob: bool=True) -> dict[Card, tuple[float, float]]:
         # build 'probability intervals' whose size correspond to their 'probability'
         interval = 0
         probs_dict = {}
@@ -50,7 +57,8 @@ class PlayerComputerWeightedRandom(PlayerComputer):
             interval = interval + prob
         return probs_dict
 
-    def select_card_in_static_probs_interval_dict(self, probs_dict):
+    @staticmethod
+    def select_card_in_static_probs_interval_dict(probs_dict: dict[Card, tuple[float, float]]) -> Card:
         # get upper bound of all intervals
         # dicts are ordered / keep insertion order since python 3.7!
         interval = [*probs_dict.values()][-1][-1]
@@ -63,7 +71,7 @@ class PlayerComputerWeightedRandom(PlayerComputer):
                 break
         return selected_card
 
-    def select_suit(self, state):
+    def select_suit(self, state: State) -> Suit:
         cards_without_joker = []
         for card in self.current_hand:
             if card.suit is not Suit.JOKER:

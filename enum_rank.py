@@ -18,5 +18,5 @@ class Rank(IntEnum):
     ACE = 14
     WIZARD = 15
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name

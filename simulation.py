@@ -1,3 +1,4 @@
+from __future__ import annotations
 import random
 import threading
 from collections import deque
@@ -5,6 +6,11 @@ from random import sample
 from enum_rank import Rank
 from enum_suit import Suit
 from trick import Trick
+from typing import TYPE_CHECKING, TextIO
+
+if TYPE_CHECKING:
+    from state import State
+    from player import Player
 
 
 class Simulation(threading.Thread):
@@ -13,7 +19,7 @@ class Simulation(threading.Thread):
     output_q = None
 
     @staticmethod
-    def simulate_episode(state, rollout_player=None, human_player=None, game_nr=0, file_round=None, file_trick=None):
+    def simulate_episode(state: State, rollout_player: Player=None, human_player: Player=None, game_nr: int=0, file_round: TextIO=None, file_trick: TextIO=None) -> tuple[int, str] | dict[str, int]:
         players_deal_order = state.players_deal_order
         players_bid_order = state.players_bid_order
         players_play_order = state.players_play_order

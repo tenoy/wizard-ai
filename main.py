@@ -124,7 +124,7 @@ if program_mode == 'simulation':
         # writer = csv.DictWriter(f, fieldnames=fieldnames)
         # writer.writeheader()
 
-        for i in range(0, 1000):
+        for i in range(0, 10000):
             players_initial_order = deque()
             # players_initial_order.append(PlayerComputerRollout(1, 'computer', "rollout"))
             # players_initial_order.append(PlayerComputerRandom(1, 'computer', "random"))

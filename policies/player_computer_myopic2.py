@@ -7,11 +7,25 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from state import State
     from card import Card
-    from player import Player
-    from trick import Trick
 
 
 class PlayerComputerMyopic2(PlayerComputerMyopic):
+
+    def calculate_bid(self, state: State) -> int:
+        bid_cards = super().calculate_bid(state)
+        sum_other_bids = sum(state.bids.values())
+        # alpha is the weight on the sum of other bids -> "how munch to care about other bids"
+        alpha = 0.1
+        # adjust bid by taking other bids into account
+        # if the sum of bids is lower than round number then increase bid, else decrease
+        if bid_cards + sum_other_bids <= state.round_nr:
+            bid = bid_cards + alpha * sum_other_bids
+        else:
+            bid = bid_cards - alpha * sum_other_bids
+        bid = round(bid)
+        # if bid != bid_cards:
+        #     print("Changed bid")
+        return bid
 
     def select_card(self, state: State, legal_cards: list[Card], played_cards: list[Card]=None) -> Card:
         if self.current_tricks_won < self.current_bid:
@@ -22,8 +36,8 @@ class PlayerComputerMyopic2(PlayerComputerMyopic):
                 prob = card.calc_dynamic_win_prob(trick=state.trick, cards_played=played_cards, current_hand=self.current_hand, cards_legal=legal_cards, players=state.players_play_order)
                 probs_dict[card] = prob
                 prob_sum = prob_sum + prob
-                # always play ace if win is possible
-                if card.rank == Rank.ACE and card.suit != state.trick.trump_suit and prob > 0:
+                # play ace as soon as possible and if not possible to definitely win with lower card
+                if card.rank == Rank.ACE and card.suit != state.trick.trump_suit and prob > 0 and len(state.trick.cards) < len(state.players_play_order):
                     return card
 
             # no chance to win

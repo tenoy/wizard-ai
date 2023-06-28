@@ -31,6 +31,8 @@ class PlayerComputerWeightedRandom(PlayerComputer):
     def recalculate_bid(self, state: State, bid: int) -> int:
         if bid == 0:
             bid = 1
+        elif bid < 0:
+            bid = bid + 1
         else:
             bid = bid + random.randint(-1, 1)
         return bid

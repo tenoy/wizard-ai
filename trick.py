@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 class Trick:
 
-    def __init__(self, trump_card: Card=None, trump_suit: Suit=None, leading_suit: Suit=None, cards: list[Card]=None, played_by: list[Player]=None, round_nr: int=None, trick_nr: int=None) -> None:
+    def __init__(self, trump_card: Card=None, trump_suit: Suit=None, leading_suit: Suit=None, cards: list[Card]=[], played_by: list[Player]=[], round_nr: int=None, trick_nr: int=None) -> None:
         self.trump_card = trump_card
         self.trump_suit = trump_suit
         self.leading_suit = leading_suit

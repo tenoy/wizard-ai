@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 class State:
 
-    def __init__(self, players_deal_order: deque[Player], players_bid_order: deque[Player], players_play_order: deque[Player], round_nr: int, trick: Trick, deck: list[Card], bids: dict[Player, int], played_cards: list[Card]=None) -> None:
+    def __init__(self, players_deal_order: deque[Player], players_bid_order: deque[Player], players_play_order: deque[Player], round_nr: int, trick: Trick, deck: list[Card], bids: dict[Player, int], played_cards: list[Card]=[]) -> None:
         self.players_deal_order = players_deal_order
         self.players_bid_order = players_bid_order
         self.players_play_order = players_play_order

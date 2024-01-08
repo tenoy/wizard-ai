@@ -267,7 +267,7 @@ class PlayerGui:
         bid_order.rotate(-1)
         play_order = deque(players_initial_order)
         play_order.rotate(-2)
-        self.state = State(players_deal_order=players_initial_order, players_bid_order=bid_order, players_play_order=play_order, round_nr=1, trick=Trick(trick_nr=1), deck=self.deck, bids={})
+        self.state = State(players_deal_order=players_initial_order, players_bid_order=bid_order, players_play_order=play_order, round_nr=1, trick=Trick(trick_nr=1), deck=self.deck, bids={}, played_cards=[])
 
         if self.simulation_thread is not None:
             PlayerGui.output_q.put('GAME_RESTART')

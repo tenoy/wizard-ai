@@ -2,6 +2,7 @@ import queue
 import threading
 import time
 from collections import deque
+from statistics import mean, stdev
 from tkinter import Tk
 from player_gui import PlayerGui
 from policies.player_computer_myopic2 import PlayerComputerMyopic2
@@ -17,6 +18,7 @@ from policies.player_computer_rollout import PlayerComputerRollout
 from policies.player_computer_weighted_random import PlayerComputerWeightedRandom
 from state import State
 from trick import Trick
+from tabulate import tabulate
 import datetime
 
 def process_simulation_event_queue():
@@ -85,7 +87,7 @@ def process_simulation_event_queue():
 
 # program mode is either 'game' (with human player) or 'simulation' (only computers)
 global program_mode
-program_mode = 'game'
+program_mode = 'simulation'
 
 if program_mode == 'game':
     is_game_mode = True
@@ -116,20 +118,23 @@ if program_mode == 'simulation':
     win_count_player = {}
     time_formatted = timestamp_start.strftime("%Y_%m_%d_%H_%M_%S")
 
+    filename_game = 'out/' + time_formatted + '_game.csv'
     filename_round = 'out/' + time_formatted + '_round.csv'
     filename_trick = 'out/' + time_formatted + '_trick.csv'
-    with open(filename_round, 'a', encoding='UTF8', newline='') as file_round, open(filename_trick, 'a', encoding='UTF8', newline='') as file_trick:
+    with open(filename_game, 'a', encoding='UTF8', newline='') as file_game, open(filename_round, 'a', encoding='UTF8', newline='') as file_round, open(filename_trick, 'a', encoding='UTF8', newline='') as file_trick:
+        file_game.write('game_nr, player, score\n')
         file_round.write('game_nr, round_nr, trump_card, trump_suit, player, bid_pos, bid, tricks_won, score\n')
         file_trick.write('game_nr, round_nr, trump_card, trump_suit, trick_nr, leading_suit, winning_card, player, play_pos, played_card\n')
         # writer = csv.DictWriter(f, fieldnames=fieldnames)
         # writer.writeheader()
 
-        for i in range(0, 10000):
+        for i in range(0, 100):
             players_initial_order = deque()
-            # players_initial_order.append(PlayerComputerRollout(1, 'computer', "rollout"))
+            players_initial_order.append(PlayerComputerRollout(1, 'computer', "rollout-heuristic2"))
+            players_initial_order.append(PlayerComputerRollout(2, 'computer', "rollout-heuristic"))
             # players_initial_order.append(PlayerComputerRandom(1, 'computer', "random"))
-            players_initial_order.append(PlayerComputerWeightedRandom(1, 'computer', "weighted_random"))
-            players_initial_order.append(PlayerComputerDynamicWeightedRandom(2, 'computer', "dynamic_weighted_random"))
+            # players_initial_order.append(PlayerComputerWeightedRandom(1, 'computer', "weighted_random"))
+            # players_initial_order.append(PlayerComputerDynamicWeightedRandom(2, 'computer', "dynamic_weighted_random"))
             players_initial_order.append(PlayerComputerMyopic(3, 'computer', "heuristic"))
             players_initial_order.append(PlayerComputerMyopic2(4, 'computer', "heuristic2"))
             # players_initial_order.append(PlayerComputerRollout(4, 'computer', "rollout"))
@@ -138,7 +143,7 @@ if program_mode == 'simulation':
             play_order = deque(players_initial_order)
             play_order.rotate(-2)
             s0 = State(players_deal_order=players_initial_order, players_bid_order=bid_order, players_play_order=play_order, round_nr=1, trick=Trick(trick_nr=1), deck=deck, bids={}, played_cards=[])
-            result = Simulation.simulate_episode(s0, game_nr=i, file_round=file_round, file_trick=file_trick)
+            result = Simulation.simulate_episode(s0, game_nr=i, file_game=file_game, file_round=file_round, file_trick=file_trick)
             result_list.append(result)
             print(f'Game {i} done')
 
@@ -148,14 +153,40 @@ if program_mode == 'simulation':
         else:
             win_count_player[result_tuple[1]] = 1
 
-    for key, value in win_count_player.items():
-        print(f"{key}: {value}")
+    player_scores = {}
+    for result_tuple in result_list:
+        for k, v in result_tuple[0].items():
+            if k in player_scores:
+                player_scores[k].append(v)
+            else:
+                player_scores[k] = [v]
+
+    player_stats = []
+    for k, v in player_scores.items():
+        player_stats_row = []
+        avg_score = round(mean(player_scores[k]), 2)
+        std_dev_score = round(stdev(player_scores[k]), 2)
+        wins = 0
+        if k in win_count_player.keys():
+            wins = win_count_player[k]
+        # player_stats[k] = (wins, avg_score, std_dev_score)
+        player_stats_row.append(k)
+        player_stats_row.append(wins)
+        player_stats_row.append(avg_score)
+        player_stats_row.append(std_dev_score)
+        player_stats.append(player_stats_row)
+
+    # for key, value in player_stats.items():
+    #     print(key, end=': ')
+    #     print(*value)
+        # print(f"{key}: {value}")
 
     timestamp_end = datetime.datetime.now()
     delta = timestamp_end - timestamp_start
     delta_str = str(delta).split('.')[0]
     print(f"Time difference is {delta_str}")
-    print('done')
+    print('')
+    print(tabulate(player_stats, headers=["Player", "Wins", "Avg. Score", "Stdev. Score"]))
 else:
     # Queues für Duplex Nachrichtenaustausch zwischen main, simulation, player_gui und player_human
     input_q = queue.Queue()

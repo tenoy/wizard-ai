@@ -5,6 +5,10 @@ import statistics
 from collections import deque
 from joblib import Parallel, delayed
 from player_human import PlayerHuman
+from policies.player_computer_dynamic_weighted_random import PlayerComputerDynamicWeightedRandom
+from policies.player_computer_myopic2 import PlayerComputerMyopic2
+from policies.player_computer_random import PlayerComputerRandom
+from policies.player_computer_weighted_random import PlayerComputerWeightedRandom
 from simulation import Simulation
 from policies.player_computer_myopic import PlayerComputerMyopic
 
@@ -19,7 +23,7 @@ class PlayerComputerRollout(PlayerComputerMyopic):
 
     def calculate_bid(self, state: State) -> int:
         # the original state must be copied and manipulated so that no rollout / human player are in the rollout state
-        state_rollout_template = PlayerComputerRollout.generate_template_rollout_state(state, 'bid')
+        state_rollout_template = PlayerComputerRollout.generate_template_rollout_state(self, state, 'bid')
 
         # get the position of the rollout player in state to change the bid and set base_policy_player for simulate_episode
         base_policy_player_pos = -1
@@ -148,12 +152,11 @@ class PlayerComputerRollout(PlayerComputerMyopic):
         result = Simulation.simulate_episode(state_rollout, base_policy_player)
         return result
 
-    @staticmethod
-    def generate_template_rollout_state(state: State, decision_type: Literal["bid", "play"]) -> State:
+    def generate_template_rollout_state(self, state: State, decision_type: Literal["bid", "play"]) -> State:
         # get all rollout / human player positions in deal, bid and play lists
         human_players_positions = {}
         rollout_players_positions = {}
-        policy_name = 'myopic_rollout_' + decision_type
+        policy_name = 'rollout_' + decision_type
         for i in range(0, len(state.players_deal_order)):
             plr = state.players_deal_order[i]
             if isinstance(plr, PlayerHuman):
@@ -179,8 +182,8 @@ class PlayerComputerRollout(PlayerComputerMyopic):
         state_rollout = state.copy_state()
 
         # substitute human players and rollout players
-        PlayerComputerRollout.substitute_player(state_rollout, human_players_positions, 'myopic_human')
-        PlayerComputerRollout.substitute_player(state_rollout, rollout_players_positions, policy_name)
+        PlayerComputerRollout.substitute_player(self, state_rollout, human_players_positions, 'human_heuristic')
+        PlayerComputerRollout.substitute_player(self, state_rollout, rollout_players_positions, policy_name)
 
         return state_rollout
 
@@ -198,10 +201,23 @@ class PlayerComputerRollout(PlayerComputerMyopic):
             if p == player:
                 return i
 
-    @staticmethod
-    def substitute_player(state_rollout: State, player_positions: dict[Player, list[int]], policy_name: str) -> None:
+    def substitute_player(self, state_rollout: State, player_positions: dict[Player, list[int]], policy_name: str) -> None:
+        base_policy = 'heuristic'
+        policy_list = self.policy.split('-')
+        if len(policy_list) > 1:
+            base_policy = policy_list[1]
+        full_policy_name = policy_name + '_' + base_policy
         for plr in player_positions:
-            base_policy_player = PlayerComputerRollout.copy_player(plr, PlayerComputerMyopic(plr.number, 'computer', policy_name))
+            if base_policy == 'random':
+                base_policy_player = PlayerComputerRollout.copy_player(plr, PlayerComputerRandom(plr.number, 'computer', full_policy_name))
+            elif base_policy == 'weighted_random':
+                base_policy_player = PlayerComputerRollout.copy_player(plr, PlayerComputerWeightedRandom(plr.number, 'computer', full_policy_name))
+            elif base_policy == 'dynamic_weighted_random':
+                base_policy_player = PlayerComputerRollout.copy_player(plr, PlayerComputerDynamicWeightedRandom(plr.number, 'computer', full_policy_name))
+            elif base_policy == 'heuristic2':
+                base_policy_player = PlayerComputerRollout.copy_player(plr, PlayerComputerMyopic2(plr.number, 'computer', full_policy_name))
+            else:
+                base_policy_player = PlayerComputerRollout.copy_player(plr, PlayerComputerMyopic(plr.number, 'computer', full_policy_name))
             # delete player and insert base policy player
             del state_rollout.players_deal_order[player_positions[plr][0]]
             state_rollout.players_deal_order.insert(player_positions[plr][0], base_policy_player)

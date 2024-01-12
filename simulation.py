@@ -19,7 +19,7 @@ class Simulation(threading.Thread):
     output_q = None
 
     @staticmethod
-    def simulate_episode(state: State, rollout_player: Player=None, human_player: Player=None, game_nr: int=0, file_round: TextIO=None, file_trick: TextIO=None) -> tuple[int, str] | dict[str, int]:
+    def simulate_episode(state: State, rollout_player: Player=None, human_player: Player=None, game_nr: int=0, file_game: TextIO=None, file_round: TextIO=None, file_trick: TextIO=None) -> tuple[int, str] | dict[str, int]:
         players_deal_order = state.players_deal_order
         players_bid_order = state.players_bid_order
         players_play_order = state.players_play_order
@@ -276,6 +276,10 @@ class Simulation(threading.Thread):
         highest_score_player = None
         player_final_scores = {}
         for player in players_deal_order:
+            # write game score
+            if file_game is not None:
+                file_game.write(str(game_nr) + ',' + str(player) + ',' + str(player_pos) + ',' + str(player.current_score) + '\n')
+            # get highest score player
             player_final_scores[str(player)] = player.current_score
             if player.current_score > highest_score:
                 highest_score = player.current_score
